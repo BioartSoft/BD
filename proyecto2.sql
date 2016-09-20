@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.5.1
--- http://www.phpmyadmin.net
+-- version 4.6.2
+-- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-09-2016 a las 00:04:31
--- Versión del servidor: 10.1.13-MariaDB
--- Versión de PHP: 5.6.23
+-- Tiempo de generación: 20-09-2016 a las 04:26:48
+-- Versión del servidor: 5.6.21
+-- Versión de PHP: 5.6.3
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -17,7 +17,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `proyecto2`
+-- Base de datos: `proyecto_bioartsoft`
 --
 
 DELIMITER $$
@@ -567,6 +567,10 @@ SELECT
             JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
             WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (1,2)$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Prestamos` ()  NO SQL
+SELECT DISTINCT p.id_persona, p.nombres, p.apellidos, tp.Tbl_nombre_tipo_persona, pre.estado_prestamo FROM tbl_persona p JOIN tbl_prestamos pre on p.id_persona = pre.Tbl_Persona_id_persona
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona WHERE pre.estado_prestamo = 1$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_producto` ()  NO SQL
 SELECT  p.id_producto,  
         p.nombre_producto, 
@@ -740,7 +744,7 @@ INSERT INTO tbl_pagoempleados VALUES (null,null, num_docu, valor_ventas ,valor_c
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_registrarPagoEmpleadoTemporal` (IN `num_docu` VARCHAR(50), IN `canti_dias` INT, IN `valor_dia` DOUBLE, IN `estado` INT)  NO SQL
 INSERT INTO tbl_pagoempleados VALUES (null,null, num_docu, null, null, canti_dias, valor_dia, null, null, null, estado)$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_RegistrarPrestamo` (IN `estado_prestamo` INT, IN `valor_prestamo` DOUBLE, IN `fecha_prestamo` DATE, IN `fecha_limite` DATE, IN `descripcion` VARCHAR(100), IN `Tbl_Persona_id_persona` INT)  NO SQL
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_RegistrarPrestamo` (IN `estado_prestamo` INT, IN `valor_prestamo` DOUBLE, IN `fecha_prestamo` DATE, IN `fecha_limite` DATE, IN `descripcion` VARCHAR(100), IN `Tbl_Persona_id_persona` VARCHAR(50))  NO SQL
 INSERT INTO tbl_prestamos VALUES (null,estado_prestamo, valor_prestamo, fecha_prestamo, fecha_limite, descripcion, Tbl_Persona_id_persona)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Registrar_Categoria` (IN `_nombre` VARCHAR(50))  NO SQL
@@ -843,7 +847,25 @@ CREATE TABLE `tbl_abono_prestamo` (
 INSERT INTO `tbl_abono_prestamo` (`idTbl_Abono_Prestamo`, `fecha_abono`, `valor`, `Tbl_Prestamos_idprestamos`) VALUES
 (1, '2016-09-14 00:09:27', 2000, 1),
 (2, '2016-09-14 00:09:45', 2000, 1),
-(3, '2016-09-18 19:32:59', 16000, 1);
+(3, '2016-09-18 19:32:59', 16000, 1),
+(4, '2016-09-19 15:01:22', 1000, 2),
+(5, '2016-09-19 15:41:37', 1000, 2),
+(6, '2016-09-19 15:41:56', 4000, 3),
+(7, '2016-09-19 18:17:35', 2000, 7),
+(8, '2016-09-19 21:03:46', 0, 7),
+(9, '2016-09-19 21:12:24', 0, 3),
+(10, '2016-09-19 21:14:08', 0, 3),
+(11, '2016-09-19 22:06:14', 0, 3),
+(12, '2016-09-19 22:07:58', 3000, 3),
+(13, '2016-09-19 22:08:44', 0, 3),
+(14, '2016-09-19 22:09:00', 0, 3),
+(15, '2016-09-19 22:09:49', 0, 3),
+(16, '2016-09-19 22:14:20', 0, 7),
+(17, '2016-09-19 22:19:47', 0, 3),
+(18, '2016-09-19 22:20:44', 0, 3),
+(19, '2016-09-19 22:21:18', 0, 3),
+(20, '2016-09-19 23:03:26', 0, 3),
+(21, '2016-09-19 23:05:39', 2000, 8);
 
 -- --------------------------------------------------------
 
@@ -979,7 +1001,7 @@ CREATE TABLE `tbl_configuracion` (
 --
 
 INSERT INTO `tbl_configuracion` (`idTbl_Configuracion`, `tipo_pago`, `tiempo_pago`, `Valor_dia`, `porcentaje_comision`, `valor_base`) VALUES
-(1, 'Pago Normal', 'Mensual', 29000, 0.06, 690400),
+(1, 'Pago Normal', 'Mensual', 30000, 0.01, 690400),
 (2, 'Liquidación', 'Anual', 0, 0, 690400),
 (3, 'Prima', 'Semestral', 0, 0, 690400);
 
@@ -1282,10 +1304,54 @@ INSERT INTO `tbl_pagoempleados` (`id_pago`, `fecha_pago`, `Tbl_Persona_id_person
 (13, '2016-09-18 19:35:49', '1128453257', NULL, NULL, 6, 1000, NULL, NULL, NULL, 1),
 (14, '2016-09-18 19:36:05', '1', 56000, 3360, NULL, NULL, 0, 0, 0, 0),
 (15, '2016-09-18 19:36:31', '1', 0, 0, NULL, NULL, 0, 699988, 349994, 1),
-(16, '2016-09-18 19:36:43', '1', 0, 0, NULL, NULL, 1917, 0, 0, 1),
+(16, '2016-09-18 19:36:43', '1', 0, 0, NULL, NULL, 1917, 0, 0, 0),
 (17, '2016-09-18 19:36:54', '1128453257', NULL, NULL, 2, 1000, NULL, NULL, NULL, 1),
 (18, '2016-09-18 19:38:01', '1128453257', NULL, NULL, 2, 32000, NULL, NULL, NULL, 1),
-(19, '2016-09-18 21:57:34', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1);
+(19, '2016-09-18 21:57:34', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(20, '2016-09-19 18:44:08', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(21, '2016-09-19 18:45:41', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 0),
+(22, '2016-09-19 20:19:51', '1128453257', NULL, NULL, 3, 20000, NULL, NULL, NULL, 1),
+(23, '2016-09-19 21:43:16', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(24, '2016-09-19 21:43:52', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(25, '2016-09-19 21:50:58', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(26, '2016-09-19 21:51:18', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(27, '2016-09-19 21:56:20', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(28, '2016-09-19 21:58:07', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(29, '2016-09-19 22:00:31', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(30, '2016-09-19 22:02:18', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(31, '2016-09-19 22:04:44', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(32, '2016-09-19 22:38:11', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(33, '2016-09-19 22:42:53', '1', 0, 0, NULL, NULL, 0, 0, 0, 0),
+(34, '2016-09-19 22:48:40', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(35, '2016-09-19 22:56:23', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(36, '2016-09-19 23:58:47', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(37, '2016-09-19 23:59:25', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(38, '2016-09-20 00:02:09', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(39, '2016-09-20 00:08:49', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(40, '2016-09-20 00:09:23', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(41, '2016-09-20 00:10:02', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(42, '2016-09-20 00:23:01', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(43, '2016-09-20 00:23:43', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(44, '2016-09-20 00:24:29', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(45, '2016-09-20 00:26:17', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(46, '2016-09-20 00:26:46', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(47, '2016-09-20 00:30:01', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(48, '2016-09-20 00:34:13', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(49, '2016-09-20 00:38:43', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(50, '2016-09-20 00:53:57', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(51, '2016-09-20 00:55:51', '1', 0, 0, NULL, NULL, 0, 699988, 349994, 1),
+(52, '2016-09-20 00:58:12', '1', 0, 0, NULL, NULL, 3835, 0, 0, 1),
+(53, '2016-09-20 01:07:31', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(54, '2016-09-20 01:08:43', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(55, '2016-09-20 01:16:24', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(56, '2016-09-20 01:20:57', '1128453257', NULL, NULL, 3, 2000, NULL, NULL, NULL, 1),
+(57, '2016-09-20 01:21:16', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(58, '2016-09-20 01:22:57', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
+(59, '2016-09-20 01:29:01', '1128453257', NULL, NULL, 5, 4000, NULL, NULL, NULL, 1),
+(60, '2016-09-20 01:34:53', '1128453257', NULL, NULL, 2, 3000, NULL, NULL, NULL, 1),
+(61, '2016-09-20 01:39:34', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(62, '2016-09-20 01:45:33', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(63, '2016-09-20 02:11:31', '126787454353', 0, 0, NULL, NULL, 0, 0, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -1322,7 +1388,51 @@ INSERT INTO `tbl_pagoempleados_has_tbl_configuracion` (`Tbl_PagoEmpleados_idpago
 (16, 3, 1917),
 (17, 1, 2000),
 (18, 1, 64000),
-(19, 1, 0);
+(19, 1, 0),
+(20, 1, 870000),
+(21, 1, 0),
+(22, 1, 60000),
+(23, 1, 0),
+(24, 1, 900000),
+(25, 1, 0),
+(26, 1, 0),
+(27, 1, 0),
+(28, 1, 0),
+(29, 1, 0),
+(30, 1, 0),
+(31, 1, 0),
+(32, 1, 0),
+(33, 2, 0),
+(34, 1, 0),
+(35, 1, 0),
+(36, 1, 0),
+(37, 1, 0),
+(38, 1, 900000),
+(39, 1, 0),
+(40, 1, 900000),
+(41, 1, 0),
+(42, 1, 0),
+(43, 1, 0),
+(44, 1, 0),
+(45, 1, 0),
+(46, 1, 0),
+(47, 1, 0),
+(48, 1, 0),
+(49, 1, 30000),
+(50, 2, 0),
+(51, 2, 1049982),
+(52, 3, 3835),
+(53, 1, 0),
+(54, 1, 0),
+(55, 1, 0),
+(56, 1, 6000),
+(57, 1, 0),
+(58, 1, 0),
+(59, 1, 20000),
+(60, 1, 6000),
+(61, 2, 0),
+(62, 2, 0),
+(63, 3, 0);
 
 -- --------------------------------------------------------
 
@@ -1385,8 +1495,11 @@ CREATE TABLE `tbl_prestamos` (
 
 INSERT INTO `tbl_prestamos` (`id_prestamos`, `estado_prestamo`, `valor_prestamo`, `fecha_prestamo`, `fecha_limite`, `descripcion`, `Tbl_Persona_id_persona`) VALUES
 (1, 0, 20000, '2016-09-01', '2016-10-14', 'Jholo', '1'),
-(2, 1, 2000, '2016-09-18', '2016-10-18', '', '1'),
-(3, 1, 32000, '2016-09-18', '2016-10-18', 'Jholo', '1');
+(2, 0, 2000, '2016-09-18', '2016-10-18', '', '1'),
+(3, 1, 32000, '2016-09-18', '2016-10-18', 'Jholo', '1'),
+(5, 1, 4000, '2016-09-19', '2016-10-19', '', '1'),
+(7, 1, 6000, '2016-09-19', '2016-10-19', '', '126787454353'),
+(8, 0, 2000, '2016-09-19', '2016-10-19', '', '126787454353');
 
 -- --------------------------------------------------------
 
@@ -1822,7 +1935,7 @@ ALTER TABLE `tbl_ventas`
 -- AUTO_INCREMENT de la tabla `tbl_abono_prestamo`
 --
 ALTER TABLE `tbl_abono_prestamo`
-  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 --
 -- AUTO_INCREMENT de la tabla `tbl_abono_ventas`
 --
@@ -1877,12 +1990,12 @@ ALTER TABLE `tbl_pagina_rol`
 -- AUTO_INCREMENT de la tabla `tbl_pagoempleados`
 --
 ALTER TABLE `tbl_pagoempleados`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
 --
 -- AUTO_INCREMENT de la tabla `tbl_prestamos`
 --
 ALTER TABLE `tbl_prestamos`
-  MODIFY `id_prestamos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_prestamos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 --
 -- AUTO_INCREMENT de la tabla `tbl_productos_has_tbl_ventas`
 --
