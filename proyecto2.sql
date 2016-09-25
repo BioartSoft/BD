@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 23-09-2016 a las 04:44:25
+-- Tiempo de generación: 25-09-2016 a las 02:38:08
 -- Versión del servidor: 5.6.21
 -- Versión de PHP: 5.6.3
 
@@ -53,8 +53,19 @@ UPDATE tbl_compras SET estado = _estado WHERE id_compras = _Codigo$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AnularPago` (IN `_id` INT, IN `_estado` INT)  NO SQL
 UPDATE tbl_pagoempleados SET estado = _estado WHERE id_pago = _id$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AnularPrestamo` (IN `_id` INT, IN `_estado` INT)  NO SQL
+UPDATE tbl_prestamos pres SET pres.estado_prestamo = _estado WHERE pres.id_prestamos = _id$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Anular_Venta` (IN `_codigo` INT, IN `_estado` INT)  NO SQL
 UPDATE tbl_ventas SET estado = _estado WHERE id_ventas = _Codigo$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AsociarPagoaLiquidacion` (IN `_id_persona` INT)  NO SQL
+SELECT pagos.total_pago FROM tbl_pagoempleados_has_tbl_configuracion pagos JOIN tbl_pagoempleados p ON pagos.Tbl_PagoEmpleados_idpago = p.id_pago WHERE pagos.Tbl_Configuracion_idTbl_Configuracion = 1 AND P.Tbl_Persona_id_persona = _id_persona
+ORDER BY pagos.Tbl_PagoEmpleados_idpago DESC LIMIT 1$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AsociarPrimaLiquidacion` (IN `_id_persona` INT)  NO SQL
+SELECT pagos.total_pago FROM tbl_pagoempleados_has_tbl_configuracion pagos JOIN tbl_pagoempleados p ON pagos.Tbl_PagoEmpleados_idpago = p.id_pago WHERE pagos.Tbl_Configuracion_idTbl_Configuracion = 3 AND P.Tbl_Persona_id_persona = _id_persona
+ORDER BY pagos.Tbl_PagoEmpleados_idpago DESC LIMIT 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_borrar_proveedor` (IN `_id_proveedor` VARCHAR(50))  NO SQL
 DELETE FROM tbl_proveedor WHERE Tbl_Persona_id_persona = _id_proveedor$$
@@ -236,6 +247,35 @@ select c.id_compras,
        CONCAT (p.nombres, ' ', p.apellidos) AS proveedor
        from tbl_compras c JOIN tbl_persona p ON c.Tbl_Persona_id_persona_proveedor = p.id_persona
 where DATE_FORMAT(fecha_compra, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND c.estado = 1 ORDER BY c.id_compras desc$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Pagos` ()  NO SQL
+SELECT DISTINCT p.id_persona, 
+	   	        CONCAT(p.nombres, ' ', p.apellidos) AS empleado,
+       			p.estado, 
+       			t.Tbl_nombre_tipo_persona,
+                pe.fecha_pago,
+                pe.cantidad_dias,
+                pe.valor_dia,
+                pe.valorComision,
+                dp.total_pago,
+                cp.tipo_pago
+FROM tbl_persona p JOIN tbl_tipopersona t ON p.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
+JOIN tbl_pagoempleados pe ON pe.Tbl_Persona_id_persona = p.id_persona
+JOIN tbl_pagoempleados_has_tbl_configuracion dp ON dp.Tbl_PagoEmpleados_idpago = pe.id_pago JOIN tbl_configuracion cp ON cp.idTbl_Configuracion = dp.Tbl_Configuracion_idTbl_Configuracion WHERE pe.estado = 1 ORDER BY pe.fecha_pago DESC$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Prestamos` ()  NO SQL
+SELECT DISTINCT p.id_persona,
+		        CONCAT(p.nombres, ' ', p.apellidos) AS empleado,
+                t.Tbl_nombre_tipo_persona,
+                tp.fecha_prestamo,
+                tp.valor_prestamo,
+                tp.descripcion,
+                tp.estado_prestamo,
+                tp.fecha_limite,
+                SUM(ap.valor) AS valor,
+                tp.valor_prestamo - SUM(ap.valor) AS pendiente
+FROM tbl_persona p JOIN tbl_tipopersona t ON t.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona JOIN tbl_prestamos tp ON tp.Tbl_Persona_id_persona = p.id_persona JOIN tbl_abono_prestamo ap ON tp.id_prestamos = ap.Tbl_Prestamos_idprestamos
+WHERE tp.estado_prestamo = 1 GROUP BY p.id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Ventas` (IN `_fecha_inicial` TIMESTAMP, IN `_fecha_final` TIMESTAMP)  NO SQL
 select v.id_ventas, 
@@ -831,6 +871,9 @@ SELECT MAX(id_usuarios) as ultimo FROM tbl_usuarios$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Usuario_Por_Codigo` (IN `_id_usuario` VARCHAR(50))  NO SQL
 SELECT nombre_usuario, clave, estado, Tbl_rol_id_rol FROM tbl_usuarios WHERE id_usuarios = _id_usuario$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ValAbonoAnularPrestamo` (IN `_id_prestamo` INT)  NO SQL
+SELECT abono.valor from tbl_abono_prestamo abono WHERE abono.Tbl_Prestamos_idprestamos = _id_prestamo$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Cantidad_Producto` (IN `_id_producto` INT)  NO SQL
 SELECT cantidad FROM tbl_productos WHERE id_producto = _id_producto$$
 
@@ -926,7 +969,9 @@ INSERT INTO `tbl_abono_prestamo` (`idTbl_Abono_Prestamo`, `fecha_abono`, `valor`
 (27, '2016-09-22 17:53:31', 0, 1, 3),
 (28, '2016-09-22 17:54:25', 0, 1, 3),
 (29, '2016-09-22 18:17:43', 0, 1, 3),
-(30, '2016-09-22 18:21:50', 0, 1, 3);
+(30, '2016-09-22 18:21:50', 0, 1, 3),
+(31, '2016-09-23 15:38:36', 0, 1, 3),
+(32, '2016-09-24 22:43:35', 0, 1, 3);
 
 -- --------------------------------------------------------
 
@@ -1133,7 +1178,7 @@ INSERT INTO `tbl_menu` (`id_menu`, `url_menu`, `texto_menu`, `icono_menu`, `padr
 (22, 'Empleados/registrarPagos', 'Registrar pagos', NULL, 21, 1),
 (23, 'Empleados/listarPagos', 'Listar pagos', NULL, 21, 2),
 (26, 'Empleados/listarLiquidacion', 'Listar liquidaciones', NULL, 24, 2),
-(27, '#', 'Préstamos empleados', 'money', NULL, 10),
+(27, '#', 'Préstamos empleados', 'credit-card', NULL, 10),
 (28, 'Empleados/registrarPrestamo', 'Registrar préstamos', NULL, 27, 1),
 (32, 'Empleados/ListarPrest', 'Listar préstamos', NULL, 27, 2),
 (34, 'Personas/listarProveedores', 'Listar proveedores', NULL, 2, 3),
@@ -1244,7 +1289,13 @@ INSERT INTO `tbl_paginas` (`codigo_paginas`, `nombre`, `url`, `estado`) VALUES
 (80, 'Compras/pdfCompras', 'Compras/informeproducto', 1),
 (81, 'Compras/pdf', 'Compras/pdfCompras', 1),
 (82, 'Ventas/informe', 'Ventas/informeVentas', 1),
-(83, 'Ventas/pdf', 'Ventas/pdfVentas', 1);
+(83, 'Ventas/pdf', 'Ventas/pdfVentas', 1),
+(84, 'empleados/estadoAbonos', 'Empleados/modificarestadoPrestamo', 1),
+(85, 'empleados/validaranularprestamo', 'Empleados/ValidarAnularPrestamo', 1),
+(86, 'empleados/asociarpago', 'Empleados/AsociarPagoLiquidacion', 1),
+(87, 'empleados/asociarPrima', 'Empleados/AsociarPagoPrima', 1),
+(88, 'empleados/informePagos', 'Empleados/informePagos', 1),
+(89, 'empleados/informePrestamos', 'Empleados/informePrestamos', 1);
 
 -- --------------------------------------------------------
 
@@ -1363,7 +1414,13 @@ INSERT INTO `tbl_pagina_rol` (`codigo_paginas`, `Tbl_rol_id_rol`, `Tbl_Paginas_c
 (101, 1, 80, 1),
 (102, 1, 81, 1),
 (103, 1, 82, 1),
-(104, 1, 83, 1);
+(104, 1, 83, 1),
+(105, 1, 84, 1),
+(106, 1, 85, 1),
+(107, 1, 86, 1),
+(108, 1, 87, 1),
+(109, 1, 88, 1),
+(110, 1, 89, 1);
 
 -- --------------------------------------------------------
 
@@ -1443,7 +1500,7 @@ INSERT INTO `tbl_pagoempleados` (`id_pago`, `fecha_pago`, `Tbl_Persona_id_person
 (51, '2016-09-20 00:55:51', '1', 0, 0, NULL, NULL, 0, 699988, 349994, 1),
 (52, '2016-09-20 00:58:12', '1', 0, 0, NULL, NULL, 3835, 0, 0, 1),
 (53, '2016-09-20 01:07:31', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
-(54, '2016-09-20 01:08:43', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(54, '2016-09-20 01:08:43', '1', 0, 0, NULL, NULL, 0, 0, 0, 0),
 (55, '2016-09-20 01:16:24', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
 (56, '2016-09-20 01:20:57', '1128453257', NULL, NULL, 3, 2000, NULL, NULL, NULL, 1),
 (57, '2016-09-20 01:21:16', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
@@ -1454,7 +1511,7 @@ INSERT INTO `tbl_pagoempleados` (`id_pago`, `fecha_pago`, `Tbl_Persona_id_person
 (62, '2016-09-20 01:45:33', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
 (63, '2016-09-20 02:11:31', '126787454353', 0, 0, NULL, NULL, 0, 0, 0, 0),
 (64, '2016-09-20 13:50:39', '1', 0, 0, NULL, NULL, 0, 0, 0, 1),
-(65, '2016-09-20 13:51:38', '1', 0, 0, NULL, NULL, 0, 699988, 349994, 1),
+(65, '2016-09-20 13:51:38', '1', 0, 0, NULL, NULL, 0, 699988, 349994, 0),
 (66, '2016-09-20 13:52:07', '1', 0, 0, NULL, NULL, 1917, 0, 0, 1),
 (67, '2016-09-21 00:51:53', 'rt4656nm343', 0, 0, NULL, NULL, 0, 0, 0, 0),
 (68, '2016-09-22 16:59:14', 'rt4656nm343', 0, 0, NULL, NULL, 0, 0, 0, 1),
@@ -1621,7 +1678,7 @@ INSERT INTO `tbl_prestamos` (`id_prestamos`, `estado_prestamo`, `valor_prestamo`
 (1, 0, 20000, '2016-09-01', '2016-10-14', 'Jholo', '1'),
 (2, 0, 2000, '2016-09-18', '2016-10-18', '', '1'),
 (3, 1, 29000, '2016-09-18', '2016-11-10', 'Jholo', '1'),
-(5, 1, 20000, '2016-09-19', '2016-10-19', '', '1'),
+(5, 3, 20000, '2016-09-19', '2016-10-19', '', '1'),
 (7, 1, 6000, '2016-09-19', '2016-10-19', '', '126787454353'),
 (8, 0, 2000, '2016-09-19', '2016-10-19', '', '126787454353'),
 (9, 1, 31000, '2016-09-21', '2016-10-21', 'cosas', 'rt4656nm343');
@@ -2075,7 +2132,7 @@ ALTER TABLE `tbl_ventas`
 -- AUTO_INCREMENT de la tabla `tbl_abono_prestamo`
 --
 ALTER TABLE `tbl_abono_prestamo`
-  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 --
 -- AUTO_INCREMENT de la tabla `tbl_abono_ventas`
 --
@@ -2120,12 +2177,12 @@ ALTER TABLE `tbl_menu`
 -- AUTO_INCREMENT de la tabla `tbl_paginas`
 --
 ALTER TABLE `tbl_paginas`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagina_rol`
 --
 ALTER TABLE `tbl_pagina_rol`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagoempleados`
 --
