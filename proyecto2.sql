@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 30-09-2016 a las 00:23:14
+-- Tiempo de generación: 30-09-2016 a las 21:01:46
 -- Versión del servidor: 5.6.21
 -- Versión de PHP: 5.6.3
 
@@ -1065,7 +1065,14 @@ INSERT INTO `tbl_abono_ventas` (`idabono`, `fechaAbono`, `valor_abono`, `Tbl_Ven
 (14, '2016-09-27 17:47:14', 2000, 13, 9000, 1),
 (15, '2016-09-27 17:47:42', 1000, 13, 10000, 1),
 (16, '2016-09-27 19:04:59', 2000, 13, 12000, 1),
-(17, '2016-09-27 19:09:57', 4000, 13, 16000, 1);
+(17, '2016-09-27 19:09:57', 4000, 13, 16000, 0),
+(18, '2016-09-30 17:40:37', 3000, 16, 3000, 1),
+(19, '2016-09-30 17:40:53', 3000, 16, 6000, 1),
+(20, '2016-09-30 17:41:32', 5000, 16, 11000, 1),
+(21, '2016-09-30 17:41:51', 5000, 16, 16000, 1),
+(22, '2016-09-30 17:43:25', 1000, 17, 1000, 1),
+(23, '2016-09-30 18:20:01', 4000, 17, 5000, 1),
+(24, '2016-09-30 18:22:16', 500, 17, 5500, 1);
 
 -- --------------------------------------------------------
 
@@ -1087,7 +1094,8 @@ CREATE TABLE `tbl_bajas` (
 INSERT INTO `tbl_bajas` (`id_bajas`, `fecha_salida`, `tipo_baja`, `estado`) VALUES
 (1, '2016-09-15 17:19:06', 'Robo', 0),
 (2, '2016-09-27 16:45:46', 'Robo', 0),
-(3, '2016-09-29 20:46:13', 'Averia', 1);
+(3, '2016-09-29 20:46:13', 'Averia', 0),
+(4, '2016-09-30 14:48:50', 'Averia', 1);
 
 -- --------------------------------------------------------
 
@@ -1798,9 +1806,9 @@ CREATE TABLE `tbl_productos` (
 
 INSERT INTO `tbl_productos` (`id_producto`, `nombre_producto`, `estado`, `precio_detal`, `precio_por_mayor`, `precio_unitario`, `Tbl_Categoria_idcategoria`, `talla`, `tamano`, `stock_minimo`, `cantidad`) VALUES
 (2, 'Mochila', 1, 8000, 6000, 7000, 2, '', 'Grande', 5, 0),
-(3, 'Camiseta', 1, 12000, 9500, 10000, 1, 'M', '', 6, 3),
+(3, 'Camiseta', 1, 12000, 9500, 10000, 1, 'M', '', 6, 0),
 (100, 'Pipa', 1, 5500, 4500, 5000, 4, '', 'pequeña', 5, 0),
-(2147483647, 'Gorro', 1, 8000, 5500, 7000, 2, '', 'mediano', 5, 4);
+(2147483647, 'Gorro', 1, 8000, 5500, 7000, 4, '', 'pequeño', 5, 0);
 
 -- --------------------------------------------------------
 
@@ -1821,7 +1829,8 @@ CREATE TABLE `tbl_productos_has_tbl_bajas` (
 INSERT INTO `tbl_productos_has_tbl_bajas` (`Tbl_Bajas_idbajas`, `Tbl_Productos_id_productos`, `Cantidad`) VALUES
 (1, 2147483647, 2),
 (2, 2147483647, 3),
-(3, 2147483647, 1);
+(3, 2147483647, 1),
+(4, 3, 2);
 
 -- --------------------------------------------------------
 
@@ -1859,7 +1868,11 @@ INSERT INTO `tbl_productos_has_tbl_ventas` (`Tbl_Ventas_id_ventas`, `cantidad`, 
 (12, 2, 2147483647, 16),
 (13, 2, 2, 17),
 (14, 20, 2147483647, 18),
-(14, 2, 3, 19);
+(14, 2, 3, 19),
+(15, 2, 2147483647, 20),
+(15, 1, 3, 21),
+(16, 2, 2147483647, 22),
+(17, 1, 2147483647, 23);
 
 -- --------------------------------------------------------
 
@@ -2003,11 +2016,11 @@ CREATE TABLE `tbl_usuarios` (
 --
 
 INSERT INTO `tbl_usuarios` (`id_usuarios`, `clave`, `estado`, `nombre_usuario`, `Tbl_rol_id_rol`) VALUES
-('1', 'eWWV+B/SPyC2Bh7iKInaiERBtncBAuLKGqaXCorFYyE=', 1, 'victor', 1),
+('1', 'LyUas5/8yyKmG2r5zCc7o9a6DLOEAkEDza7XkPtC6vM=', 1, 'victor', 1),
 ('1128453257', 'sx3Epg/y284LAFeCkczgCrgWooIp8SKac/9VIKyKWyg=', 1, 'juan', 2),
-('126787454353', 'P6+Kh7mZXhph9kQUXo8j/ZU38alNisvzWSoPIauMLdw=', 1, 'guillermo', 2),
+('126787454353', 'kjZPL6rDJdgYjPNygtgkBPjL7CWLbn0HThA40lE14BA=', 1, 'guillermo', 2),
 ('8104179', '40bd001563085fc35165329ea1ff5c5ecbdbbeef', 1, 'diego', 2),
-('rt4656nm343', 'MffRwVjcGtEjwninWJJ369CcX5Z+XMtg205G9WE5DG0=', 1, 'raul', 2);
+('rt4656nm343', 'G0gIBxgnGIrM6jQZwT2jGNcxgCeB4EwEp7bjPRXb3Ig=', 1, 'raul', 2);
 
 -- --------------------------------------------------------
 
@@ -2047,7 +2060,10 @@ INSERT INTO `tbl_ventas` (`id_ventas`, `tipo_de_pago`, `fecha_venta`, `descuento
 (11, '2', '2016-09-21 02:50:21', 0, 0, 45000, 1, '1', '32432nm2324', 1, NULL),
 (12, '2', '2016-09-22 16:46:10', 1050, 35000, 33950, 1, '1', '32432nm2324', 1, NULL),
 (13, '1', '2016-09-27 19:09:57', 0, 16000, 16000, 1, '1', '464365745', 0, '2016-10-22'),
-(14, '2', '2016-09-27 17:21:46', 9200, 184000, 174800, 1, '1', '4546546546', 1, NULL);
+(14, '2', '2016-09-27 17:21:46', 9200, 184000, 174800, 1, '1', '4546546546', 1, NULL),
+(15, '2', '2016-09-30 17:12:02', 0, 20500, 20500, 1, '1', '32432nm2324', 1, NULL),
+(16, '1', '2016-09-30 17:41:51', 0, 16000, 16000, 1, '1', '34534543364', 0, '2016-10-30'),
+(17, '1', '2016-09-30 18:22:16', 0, 5500, 5500, 1, '1', '32432nm2324', 0, '2016-10-30');
 
 --
 -- Índices para tablas volcadas
@@ -2232,12 +2248,12 @@ ALTER TABLE `tbl_abono_prestamo`
 -- AUTO_INCREMENT de la tabla `tbl_abono_ventas`
 --
 ALTER TABLE `tbl_abono_ventas`
-  MODIFY `idabono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `idabono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 --
 -- AUTO_INCREMENT de la tabla `tbl_bajas`
 --
 ALTER TABLE `tbl_bajas`
-  MODIFY `id_bajas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_bajas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 --
 -- AUTO_INCREMENT de la tabla `tbl_categoria`
 --
@@ -2292,7 +2308,7 @@ ALTER TABLE `tbl_prestamos`
 -- AUTO_INCREMENT de la tabla `tbl_productos_has_tbl_ventas`
 --
 ALTER TABLE `tbl_productos_has_tbl_ventas`
-  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 --
 -- AUTO_INCREMENT de la tabla `tbl_rol`
 --
@@ -2307,7 +2323,7 @@ ALTER TABLE `tbl_rol_menu`
 -- AUTO_INCREMENT de la tabla `tbl_ventas`
 --
 ALTER TABLE `tbl_ventas`
-  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 --
 -- Restricciones para tablas volcadas
 --
