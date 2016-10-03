@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 02-10-2016 a las 17:52:23
+-- Tiempo de generación: 03-10-2016 a las 02:18:13
 -- Versión del servidor: 5.6.21
 -- Versión de PHP: 5.6.3
 
@@ -129,6 +129,15 @@ SELECT u.nombre_usuario,
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Configuracion` ()  NO SQL
 SELECT Porcentaje_Maximo_Dcto, Valor_Subtotal_Minimo, 	Porcentaje_Minimo_Dcto, Valor_Subtotal_Maximo FROM tbl_configuracion_ventas$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Emails` ()  NO SQL
+SELECT email FROM tbl_persona$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Nombres_Categorias` ()  NO SQL
+SELECT LOWER(nombre) AS nombre FROM tbl_categoria$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Nombre_Productos` ()  NO SQL
+SELECT LOWER(nombre_producto) AS nombre FROM tbl_productos$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Personas` ()  NO SQL
 SELECT * FROM tbl_persona$$
 
@@ -139,7 +148,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Total_Abono` (IN `_id_
 SELECT total_venta - (fn_total_abonos(_id_venta) + _valor_abono) AS total  FROM tbl_ventas WHERE id_ventas = _id_venta$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Usuarios` ()  NO SQL
-SELECT nombre_usuario FROM tbl_usuarios$$
+SELECT nombre_usuario
+FROM tbl_usuarios$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_DetalleBaja` (IN `__Tbl_Bajas_idbajas` INT, IN `_Tbl_Productos_id_productos` INT, IN `_Cantidad` INT)  NO SQL
 BEGIN
@@ -605,14 +615,14 @@ SELECT
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_informe` ()  NO SQL
 select p.id_producto,
-	p.nombre_producto ,
-	p.precio_detal ,
-	p.precio_por_mayor,
-    c.nombre,
-    p.cantidad,
-    p.estado,
-    p.precio_unitario
-    from tbl_productos p join tbl_categoria c on p.Tbl_Categoria_idcategoria = c.id_categoria$$
+	   p.nombre_producto ,
+	   p.precio_detal ,
+	   p.precio_por_mayor,
+       c.nombre,
+       p.cantidad,
+       p.estado,
+       p.precio_unitario
+    from tbl_productos p join tbl_categoria c on p.Tbl_Categoria_idcategoria = c.id_categoria WHERE p.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_PersClienteID` (IN `_id_cliente` VARCHAR(50))  NO SQL
 SELECT
@@ -867,6 +877,36 @@ SELECT p.url
 FROM tbl_pagina_rol t JOIN tbl_paginas p ON p.codigo_paginas = t.Tbl_Paginas_codigo_paginas
 WHERE Tbl_rol_id_rol = _id_rol AND p.url = _url AND t.estado = 1$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_DetallesCompra` (IN `_id_compra` INT)  NO SQL
+SELECT cp.id_detalle,
+	   cp.cantidad,
+       p.id_producto,
+       p.nombre_producto,
+       p.precio_unitario,
+       (p.precio_unitario * cp.cantidad) AS total, 
+       c.fecha_compra,
+       c.valor_total,
+       CONCAT(pro.nombres, ' ', pro.apellidos) AS proveedor
+FROM tbl_compras_has_tbl_productos AS cp JOIn tbl_productos AS p ON p.id_producto = cp.Tbl_Productos_id_productos JOIN tbl_compras c ON c.id_compras = cp.Tbl_Compras_idcompras JOIN tbl_persona pro ON pro.id_persona = c.Tbl_Persona_id_persona_proveedor
+WHERE Tbl_Compras_idcompras = _id_compra GROUP BY pro.id_persona$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Venta` (IN `_id_venta` INT)  NO SQL
+SELECT
+          	dv.id_detalle_venta,
+          	dv.cantidad,
+          	p.id_producto,
+          	p.nombre_producto,
+          	p.precio_unitario,
+            p.precio_por_mayor,
+            p.precio_detal,
+          	(p.precio_detal * dv.cantidad) AS total,
+            CONCAT(per.nombres, ' ', per.apellidos) AS cliente,
+            v.fecha_venta,
+            v.descuento,
+            v.subtotal_venta,
+            v.total_venta
+FROM tbl_persona per JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = per.id_persona JOIN tbl_productos_has_tbl_ventas dv ON dv.Tbl_Ventas_id_ventas = v.id_ventas JOIN tbl_productos p ON p.id_producto = dv.Tbl_Productos_id_productos WHERE dv.Tbl_Ventas_id_ventas = _id_venta GROUP BY per.id_persona$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_RegistrarAbonoPrestamo` (IN `valor` DOUBLE, IN `estado` INT, IN `Tbl_Prestamos_idprestamos` INT)  NO SQL
 INSERT INTO tbl_abono_prestamo VALUES(null, null, valor, estado, Tbl_Prestamos_idprestamos)$$
 
@@ -950,8 +990,29 @@ SELECT fecha_compra FROM tbl_compras WHERE DATE_FORMAT(fecha_compra, '%Y%m%d') =
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Id_Persona` (IN `_Id_Persona` VARCHAR(50))  NO SQL
 SELECT id_persona FROM tbl_persona WHERE id_persona = _Id_Persona$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Email` (IN `_id_persona` VARCHAR(50), IN `_correo` VARCHAR(50))  NO SQL
+SELECT email
+FROM tbl_persona WHERE email = _correo AND id_persona = _id_persona$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Nombre_Categoria` (IN `_id` INT, IN `_nombre` VARCHAR(50))  NO SQL
+SELECT LOWER(nombre) AS nombre
+FROM tbl_categoria WHERE nombre = _nombre AND id_categoria = _id$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Nombre_Producto` (IN `_id_producto` INT, IN `_nombre` VARCHAR(50))  NO SQL
+SELECT LOWER(nombre_producto) AS nombre
+FROM tbl_productos WHERE nombre_producto = _nombre AND id_producto = _id_producto$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Usuario` (IN `_id_persona` VARCHAR(50), IN `_nombre_usuario` VARCHAR(50))  NO SQL
-SELECT nombre_usuario FROM tbl_usuarios WHERE nombre_usuario = _nombre_usuario AND id_usuarios = _id_persona$$
+SELECT nombre_usuario
+FROM tbl_usuarios WHERE nombre_usuario = _nombre_usuario AND id_usuarios = _id_persona$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Mod_Email` (IN `_id` VARCHAR(50))  NO SQL
+SELECT email
+FROM tbl_persona WHERE id_persona <> _id$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombres_Categorias` (IN `_id` INT)  NO SQL
+SELECT LOWER(nombre) AS nombre
+FROM tbl_categoria WHERE id_categoria <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Categoria` (IN `_categoria` VARCHAR(50))  NO SQL
 SELECT id_categoria, nombre FROM tbl_categoria WHERE nombre = _categoria$$
@@ -959,11 +1020,16 @@ SELECT id_categoria, nombre FROM tbl_categoria WHERE nombre = _categoria$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Producto` (IN `_nombre` VARCHAR(50))  NO SQL
 SELECT nombre_producto FROM tbl_productos WHERE nombre_producto = _nombre$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Productos` (IN `_id` VARCHAR(50))  NO SQL
+SELECT LOWER(nombre_producto) AS nombre
+FROM tbl_productos WHERE id_producto <> _id$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_nombre_Usu` (IN `_Nombre` VARCHAR(50))  NO SQL
 SELECT nombre_usuario FROM tbl_usuarios WHERE nombre_usuario = _Nombre$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Usuario` (IN `_id` VARCHAR(50))  NO SQL
-SELECT nombre_usuario FROM tbl_usuarios WHERE id_usuarios <> _id$$
+SELECT nombre_usuario
+FROM tbl_usuarios WHERE id_usuarios <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Prestamo` (IN `_id_persona` VARCHAR(50))  NO SQL
 SELECT Tbl_Persona_id_persona, estado_prestamo, valor_prestamo FROM tbl_prestamos WHERE estado_prestamo = 1 AND Tbl_Persona_id_persona = _id_persona$$
@@ -1406,7 +1472,8 @@ INSERT INTO `tbl_paginas` (`codigo_paginas`, `nombre`, `url`, `estado`) VALUES
 (91, 'Compras/pdfDetalles', 'Compras/generarpdfDetallesCompras', 1),
 (92, 'producto/anularBaja', 'producto/AnularBaja', 1),
 (93, 'ventas/estadoAbonos', 'Ventas/modificarestadoAbonos', 1),
-(94, 'producto/validacionombre', 'producto/validacionNombre', 1);
+(94, 'producto/validacionombre', 'producto/validacionNombre', 1),
+(95, 'ventas/pdfdetallesventas', 'Ventas/generarpdfDetallesVentas', 1);
 
 -- --------------------------------------------------------
 
@@ -1536,7 +1603,8 @@ INSERT INTO `tbl_pagina_rol` (`codigo_paginas`, `Tbl_rol_id_rol`, `Tbl_Paginas_c
 (112, 1, 91, 1),
 (113, 1, 92, 1),
 (114, 1, 93, 1),
-(115, 1, 94, 1);
+(115, 1, 94, 1),
+(116, 1, 95, 1);
 
 -- --------------------------------------------------------
 
@@ -1759,20 +1827,20 @@ CREATE TABLE `tbl_persona` (
 --
 
 INSERT INTO `tbl_persona` (`id_persona`, `telefono`, `nombres`, `email`, `direccion`, `apellidos`, `estado`, `genero`, `tipo_documento`, `Tbl_TipoPersona_idTbl_TipoPersona`, `celular`, `fecha_Contrato`, `fecha_Terminacion_Contrato`) VALUES
-('1', '51310123', 'Victor', 'jdvargas752@misena.edu.co', 'Cra 45', 'Gómez', 1, 'Masculino', 'Cedula', 1, '31474721334', '2016-03-07', '2017-03-07'),
+('1', '51310123', 'Victor Hugo', 'jdvargas752@misena.edu.co', 'Cra 45', 'Gómez', 1, 'Masculino', 'Cedula', 1, '31474721334', '2016-03-07', '2017-03-07'),
 ('1128453257', '3027984', 'Juan David', 'juan@gmail.com', 'Prado', 'Vargas', 1, 'Masculino', 'Cedula', 2, '3503116785', NULL, NULL),
 ('126787454353', '23459012', 'Guillermo', 'guillermo@hotmail.com', 'Medellín', 'Gómez', 1, 'Masculino', 'Cedula', 1, '3005671234', '2016-09-08', '2017-09-08'),
 ('32432nm2324', '325425423', 'Mickey', 'mouse@yahoo.us', 'Orlando', 'Mouse', 1, 'Masculino', 'Cédula_Extranjera', 5, '3002348956', NULL, NULL),
 ('34346546', '3451232', 'Jonhatan', 'Johatan@hotmail.com', 'San Javier', 'Ramirez', 1, '', 'Cedula', 4, '3001236543', NULL, NULL),
 ('34534543364', '3456789', 'Cristian', 'cristian@hotmail.com', 'Aranjuez', 'Rojas', 1, 'Masculino', 'Cedula', 6, '3217864590', NULL, NULL),
 ('34534646564', '2348912', 'Jhoan', 'jhoan@hotmail.com', 'Estrella', 'López', 1, '', 'Cedula', 3, '3002345621', NULL, NULL),
-('34rt454mn454', '3002389', 'josé', 'jose@yahoo.es', 'Muy lejos', 'Perez', 1, '', 'Cédula_Extranjera', 4, '3219003412', NULL, NULL),
+('34rt454mn454', '3002389', 'josé', 'jose@yahoo.es', 'Muy lejos', 'Perez', 1, '', 'Cédula_Extranjera', 3, '3219003412', NULL, NULL),
 ('35353454', '3059748', 'Manuela', 'manu@hotmail.com', 'Medellin', 'Urrego ', 1, 'Femenino', 'Cedula', 5, '3005673425', NULL, NULL),
-('435621278', '3457823', 'Bryan', 'bryan@yahoo.es', 'Norte', 'Bedoya', 1, '', 'Cedula', 3, '3004562389', NULL, NULL),
+('435621278', '3457823', 'Bryan', 'bryan@yahoo.es', 'Norte', 'Bedoya', 1, '', 'Cedula', 4, '3004562389', NULL, NULL),
 ('4546546546', '3459012', 'mario', 'mario@gmail.com', 'sur', 'perez', 1, 'Masculino', 'Cedula', 6, '3453324436', NULL, NULL),
 ('464365745', '3059748', 'Kevin', 'kevin@hotmail.com', 'Caldas', 'Escudero', 1, 'Masculino', 'Cedula', 6, '3005673423', NULL, NULL),
 ('8104179', '6767878', 'Diego', 'diego@gmail.com', 'cra 12', 'Lopez', 1, 'Masculino', 'Cedula', 1, '3112334312', '2016-08-02', '2017-08-09'),
-('rt34mn3434mf', '3002389', 'Daniela', 'dani@hotmail.com', 'Envigado', 'Alcazar', 1, 'Femenino', 'Cédula_Extranjera', 6, '3219003412', NULL, NULL),
+('rt34mn3434mf', '3002389', 'Daniela', 'dani@hotmail.com', 'Envigado', 'Alcazar', 1, 'Femenino', 'Cédula_Extranjera', 5, '3219003412', NULL, NULL),
 ('rt4656nm343', '2345678', 'Raúl', 'raul@gmail.com', 'Poblado', 'Martínez', 1, 'Masculino', 'Cédula_Extranjera', 1, '3002341278', '2016-09-09', '2017-09-09');
 
 -- --------------------------------------------------------
@@ -1833,7 +1901,7 @@ CREATE TABLE `tbl_productos` (
 INSERT INTO `tbl_productos` (`id_producto`, `nombre_producto`, `estado`, `precio_detal`, `precio_por_mayor`, `precio_unitario`, `Tbl_Categoria_idcategoria`, `talla`, `tamano`, `stock_minimo`, `cantidad`) VALUES
 (2, 'Mochila', 1, 8000, 6000, 7000, 2, '', 'Grande', 5, 0),
 (3, 'Camiseta', 1, 12000, 9500, 10000, 1, 'M', '', 6, 8),
-(100, 'Pipa', 1, 5500, 4500, 5000, 4, '', 'pequeña', 5, 4),
+(100, 'Pipa', 1, 5500, 4500, 5000, 4, '', 'mediana', 5, 4),
 (2147483647, 'Gorro', 1, 8000, 5500, 7000, 2, '', 'Pequeño', 5, 9);
 
 -- --------------------------------------------------------
@@ -1923,7 +1991,7 @@ CREATE TABLE `tbl_proveedor` (
 
 INSERT INTO `tbl_proveedor` (`nit`, `empresa`, `telefono_empresa`, `Tbl_Persona_id_persona`) VALUES
 ('234.23.456', 'Manillas de Colombia LTDA', '344665767', '34346546'),
-('232.2324.12', 'Artesanías LTDA', '2324 ext. 123', '34rt454mn454');
+('345.23.345', 'Artesanías de Colombia S.A', '4562390 ext. 123', '435621278');
 
 -- --------------------------------------------------------
 
@@ -2319,12 +2387,12 @@ ALTER TABLE `tbl_menu`
 -- AUTO_INCREMENT de la tabla `tbl_paginas`
 --
 ALTER TABLE `tbl_paginas`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagina_rol`
 --
 ALTER TABLE `tbl_pagina_rol`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagoempleados`
 --
