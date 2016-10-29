@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-10-2016 a las 01:31:51
+-- Tiempo de generación: 29-10-2016 a las 04:43:12
 -- Versión del servidor: 5.6.21
 -- Versión de PHP: 5.6.3
 
@@ -323,25 +323,37 @@ JOIN
 tbl_bajas b ON b.id_bajas = p.Tbl_Bajas_idbajas WHERE b.estado = 1 ORDER BY b.fecha_salida DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Bajas_Por_fecha` (IN `_fecha_inicial` TIMESTAMP, IN `_fecha_final` TIMESTAMP)  NO SQL
-SELECT p.id_producto,
+BEGIN
+SET lc_time_names = 'es_VE';
+
+SELECT 
+       p.id_producto,
        p.nombre_producto,
        c.nombre,
        b.fecha_salida,
+       DATE_FORMAT(b.fecha_salida, '%M') AS fecha,
        b.tipo_baja,
        db.cantidad
 FROM tbl_productos p JOIN tbl_categoria c ON c.id_categoria = p.Tbl_Categoria_idcategoria JOIN
-tbl_productos_has_tbl_bajas db ON p.id_producto = db.Tbl_Productos_id_productos JOIN tbl_bajas b ON b.id_bajas = db.Tbl_Bajas_idbajas where DATE_FORMAT(b.fecha_salida, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND b.estado = 1 ORDER BY b.fecha_salida desc$$
+tbl_productos_has_tbl_bajas db ON p.id_producto = db.Tbl_Productos_id_productos JOIN tbl_bajas b ON b.id_bajas = db.Tbl_Bajas_idbajas where DATE_FORMAT(b.fecha_salida, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND b.estado = 1 ORDER BY b.fecha_salida desc;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Compras` (IN `_fecha_inicial` TIMESTAMP, IN `_fecha_final` TIMESTAMP)  NO SQL
+BEGIN
+
+SET lc_time_names = 'es_CO';
+
 select c.id_compras, 
 	   c.fecha_compra, 
+       DATE_FORMAT(c.fecha_compra, '%M') AS mes,
        c.valor_total, 
        c.estado, 
        c.Tbl_Persona_id_persona_proveedor, 
        c.Tbl_Persona_id_persona_empleado,
        CONCAT (p.nombres, ' ', p.apellidos) AS proveedor
        from tbl_compras c JOIN tbl_persona p ON c.Tbl_Persona_id_persona_proveedor = p.id_persona
-where DATE_FORMAT(fecha_compra, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND c.estado = 1 ORDER BY c.id_compras desc$$
+where DATE_FORMAT(fecha_compra, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND c.estado = 1 ORDER BY c.id_compras desc;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Pagos` ()  NO SQL
 SELECT DISTINCT p.id_persona, 
@@ -387,9 +399,24 @@ SELECT DISTINCT p.id_persona,
 JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
 WHERE pre.estado_prestamo = 1 OR pre.estado_prestamo = 3$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Prestamos_Por_Empleado` (IN `_id_persona` VARCHAR(50))  NO SQL
+SELECT DISTINCT p.id_persona,
+       CONCAT(p.nombres, ' ', p.apellidos) AS empleado,
+       tp.Tbl_nombre_tipo_persona,
+       pres.fecha_prestamo,
+       pres.valor_prestamo,
+       pres.descripcion,
+       pres.fecha_limite
+from tbl_persona p JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona JOIN tbl_prestamos pres ON pres.Tbl_Persona_id_persona = p.id_persona 
+WHERE p.id_persona = _id_persona AND pres.estado_prestamo IN (1, 3) ORDER BY pres.fecha_prestamo DESC$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Ventas` (IN `_fecha_inicial` TIMESTAMP, IN `_fecha_final` TIMESTAMP)  NO SQL
+BEGIN
+SET lc_time_names = 'es_CO';
+
 select v.id_ventas, 
 	   v.fecha_venta, 
+       DATE_FORMAT(v.fecha_venta, '%M') AS mes,
        v.total_venta, 
        v.subtotal_venta,
        v.descuento,
@@ -399,7 +426,8 @@ select v.id_ventas,
        v.tipo_de_pago,
        CONCAT (p.nombres, ' ', p.apellidos) AS cliente
        from tbl_ventas v JOIN tbl_persona p ON v.Tbl_persona_idpersona_cliente = p.id_persona
-where DATE_FORMAT(fecha_venta, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND v.estado = 1 ORDER BY v.id_ventas desc$$
+where DATE_FORMAT(fecha_venta, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND v.estado = 1 ORDER BY v.fecha_venta DESC;
+END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Info_Baja` (IN `_id_baja` INT)  NO SQL
 SELECT b.id_persona_empleado,
@@ -1046,6 +1074,42 @@ JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = p.id_persona
 JOIN tbl_abono_ventas a ON a.Tbl_Ventas_idventas = v.id_ventas 
 WHERE p.id_persona = _id AND a.estado_abono = 1 AND v.estado_credito = 1 AND v.estado = 1 GROUP BY p.id_persona$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Abono_Prestamo` (IN `_id` VARCHAR(50))  NO SQL
+SELECT
+	p.id_persona,
+	CONCAT(p.nombres, ' ', p.apellidos) AS empleado,
+	pre.fecha_prestamo,
+	pre.valor_prestamo,
+	pre.estado_prestamo,
+	pre.id_prestamos,
+	pre.fecha_limite,
+	pre.descripcion,
+	ap.idTbl_Abono_Prestamo,
+	DATE_FORMAT(ap.fecha_abono, '%Y/%m/%d') AS fecha_abono,
+	(
+		SELECT
+			valor
+		FROM
+			tbl_abono_prestamo abp
+		WHERE
+			pre.id_prestamos and abp.idTbl_Abono_Prestamo = MAX(ap.idTbl_Abono_Prestamo)
+	) AS valor,
+	SUM(ap.valor) AS abonado,
+	(
+		pre.valor_prestamo - SUM(ap.valor)
+	) AS pendiente,
+	ap.estado_abono
+FROM
+	tbl_persona p
+JOIN tbl_prestamos pre ON pre.Tbl_Persona_id_persona = p.id_persona
+JOIN tbl_abono_prestamo ap ON ap.Tbl_Prestamos_idprestamos = pre.id_prestamos
+WHERE
+	p.id_persona = _id
+AND ap.estado_abono = 1
+AND pre.estado_prestamo = 1
+GROUP BY
+	p.id_persona$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Venta` (IN `_id_venta` INT)  NO SQL
 SELECT
           	dv.id_detalle_venta,
@@ -1110,11 +1174,26 @@ SELECT DISTINCT
           AND V.tipo_de_pago = 1 AND v.estado = 1 AND av.estado_abono           = 1 AND v.estado_credito = 1 GROUP BY p.id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Reporte_Ganancias` (IN `_fecha_inicial` DATE, IN `_fecha_final` DATE)  NO SQL
-SELECT (SUM(precio_venta * cantidad)) - (SUM(cantidad * precio_unitario_actual)) AS ganancias FROM tbl_productos_has_tbl_ventas dv JOIN tbl_ventas v ON v.id_ventas = dv.Tbl_Ventas_id_ventas  
-WHERE DATE_FORMAT(v.fecha_venta, '%Y-%m-%d') BETWEEN DATE_FORMAT(_fecha_inicial, '%Y-%m-%d') AND DATE_FORMAT(_fecha_final, '%Y-%m-%d') AND v.estado = 1$$
+SELECT ((SUM(precio_venta * cantidad)) - (SUM(cantidad * precio_unitario_actual)) - SUM(v.descuento)) AS ganancias 
+FROM tbl_productos_has_tbl_ventas dv 
+JOIN tbl_ventas v ON v.id_ventas = dv.Tbl_Ventas_id_ventas  
+WHERE DATE_FORMAT(v.fecha_venta, '%Y-%m-%d') 
+BETWEEN DATE_FORMAT(_fecha_inicial, '%Y-%m-%d') 
+AND DATE_FORMAT(_fecha_final, '%Y-%m-%d') 
+AND v.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_sumarValorAbonoPrestamo` (IN `_id_Prestamo` INT)  NO SQL
 SELECT sum(valor) as Total from tbl_abono_prestamo WHERE Tbl_Prestamos_idprestamos = _id_Prestamo$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Total_Compras_Fecha` (IN `_fecha_inicial` DATE, IN `_fecha_final` DATE)  NO SQL
+SELECT SUM(valor_total) AS total, fecha_compra 
+FROM tbl_compras 
+WHERE DATE_FORMAT(fecha_compra, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND estado = 1 ORDER BY fecha_compra DESC$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Total_Ventas_Por_Fecha` (IN `_fecha_inicial` DATE, IN `_fecha_final` DATE)  NO SQL
+SELECT (SUM(total_venta) - descuento) AS total, fecha_venta 
+FROM tbl_ventas 
+WHERE DATE_FORMAT(fecha_venta, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND estado = 1 ORDER BY fecha_venta DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_traerAbonosPorPrestamos` (IN `_id_prestamos` INT)  NO SQL
 SELECT abono.estado_abono, SUM(abono.valor) as TotalAbono FROM tbl_abono_prestamo abono WHERE abono.Tbl_Prestamos_idprestamos = _id_prestamos AND abono.estado_abono = 0$$
@@ -1285,7 +1364,9 @@ CREATE TABLE `tbl_abono_prestamo` (
 INSERT INTO `tbl_abono_prestamo` (`idTbl_Abono_Prestamo`, `fecha_abono`, `valor`, `estado_abono`, `Tbl_Prestamos_idprestamos`) VALUES
 (1, '2016-10-25 12:44:53', 11000, 1, 1),
 (2, '2016-10-25 21:45:13', 5000, 1, 2),
-(3, '2016-10-26 12:28:34', 2000, 0, 3);
+(3, '2016-10-26 12:28:34', 2000, 0, 3),
+(4, '2016-10-28 20:35:37', 3000, 1, 3),
+(5, '2016-10-28 20:57:03', 1000, 1, 3);
 
 -- --------------------------------------------------------
 
@@ -1504,7 +1585,7 @@ INSERT INTO `tbl_menu` (`id_menu`, `url_menu`, `texto_menu`, `icono_menu`, `padr
 (39, 'Compras/informeproducto', 'Reporte Entradas', NULL, 12, 3),
 (40, 'Ventas/informeVentas', 'Reporte Ventas', NULL, 15, 4),
 (41, 'producto/informeBajas', 'Reporte Bajas', NULL, 5, 4),
-(42, 'Ventas/informeGanancias', 'Reporte Ganancías', NULL, 15, 5);
+(42, 'Ventas/informeGanancias', 'Listar Promedio Ganancías', NULL, 15, 5);
 
 -- --------------------------------------------------------
 
@@ -1626,7 +1707,9 @@ INSERT INTO `tbl_paginas` (`codigo_paginas`, `nombre`, `url`, `estado`) VALUES
 (100, 'ventas/pdfAbonos', 'Ventas/generarpdfDetalleAbonos', 1),
 (101, 'ventas/pdfreporteganancias', 'Ventas/reporteGanancias', 1),
 (102, 'ventas/informganancias', 'Ventas/informeGanancias', 1),
-(103, 'producto/detallesBajas', 'producto/ajaxDetallesBajas', 1);
+(103, 'producto/detallesBajas', 'producto/ajaxDetallesBajas', 1),
+(104, 'empleados/pdfprestamos', 'Empleados/generarpdfPrestamos', 1),
+(105, 'empleados/pdfAbonoprestamos', 'Empleados/generarpdfDetalleAbonos', 1);
 
 -- --------------------------------------------------------
 
@@ -1845,7 +1928,9 @@ INSERT INTO `tbl_pagina_rol` (`codigo_paginas`, `Tbl_rol_id_rol`, `Tbl_Paginas_c
 (207, 3, 101, 1),
 (208, 3, 102, 1),
 (209, 3, 103, 1),
-(210, 1, 103, 1);
+(210, 1, 103, 1),
+(211, 3, 104, 1),
+(212, 3, 105, 1);
 
 -- --------------------------------------------------------
 
@@ -1878,7 +1963,9 @@ INSERT INTO `tbl_pagoempleados` (`id_pago`, `fecha_pago`, `Tbl_Persona_id_person
 (4, '2016-10-26 23:00:11', '1128453257', NULL, NULL, 5, 7000, NULL, NULL, NULL, 1),
 (5, '2016-10-26 23:00:33', '1128453257', NULL, NULL, 5, 7000, NULL, NULL, NULL, 1),
 (6, '2016-10-26 23:06:38', '325345345', NULL, NULL, 4, 3000, NULL, NULL, NULL, 1),
-(7, '2016-10-26 23:07:53', '3773443674', NULL, NULL, 4, 5000, NULL, NULL, NULL, 1);
+(7, '2016-10-26 23:07:53', '3773443674', NULL, NULL, 4, 5000, NULL, NULL, NULL, 1),
+(8, '2016-10-27 16:12:43', '103456784356', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(9, '2016-10-28 16:17:18', '103456784356', 0, 0, NULL, NULL, 0, 0, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -1903,7 +1990,9 @@ INSERT INTO `tbl_pagoempleados_has_tbl_configuracion` (`Tbl_PagoEmpleados_idpago
 (4, 1, 35000),
 (5, 1, 35000),
 (6, 1, 12000),
-(7, 1, 35000);
+(7, 1, 35000),
+(8, 1, 480000),
+(9, 1, 480000);
 
 -- --------------------------------------------------------
 
@@ -1997,11 +2086,11 @@ CREATE TABLE `tbl_productos` (
 --
 
 INSERT INTO `tbl_productos` (`id_producto`, `nombre_producto`, `estado`, `precio_detal`, `precio_por_mayor`, `precio_unitario`, `Tbl_Categoria_idcategoria`, `talla`, `tamano`, `stock_minimo`, `cantidad`) VALUES
-(1, 'pipa', 1, 1900, 1800, 1000, 1, 'M', '', 5, 20),
+(1, 'pipa', 1, 1900, 1800, 1000, 1, 'M', '', 5, 5),
 (2, 'camisa', 1, 1500, 1000, 2000, 1, 'M', '', 5, 20),
 (3, 'camiseta', 1, 5000, 4000, 3000, 1, '', '', 3, 20),
 (5, 'camisilla', 1, 13000, 12000, 10000, 1, 'M', '', 5, 20),
-(6, 'pipita', 0, 5000, 4500, 2000, 2, '', '', 5, 20);
+(6, 'pipita', 1, 5000, 4500, 2000, 2, '', '', 5, 20);
 
 -- --------------------------------------------------------
 
@@ -2439,7 +2528,7 @@ ALTER TABLE `tbl_ventas`
 -- AUTO_INCREMENT de la tabla `tbl_abono_prestamo`
 --
 ALTER TABLE `tbl_abono_prestamo`
-  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 --
 -- AUTO_INCREMENT de la tabla `tbl_abono_ventas`
 --
@@ -2484,17 +2573,17 @@ ALTER TABLE `tbl_menu`
 -- AUTO_INCREMENT de la tabla `tbl_paginas`
 --
 ALTER TABLE `tbl_paginas`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagina_rol`
 --
 ALTER TABLE `tbl_pagina_rol`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=211;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=213;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagoempleados`
 --
 ALTER TABLE `tbl_pagoempleados`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 --
 -- AUTO_INCREMENT de la tabla `tbl_prestamos`
 --
