@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 14-11-2016 a las 22:08:46
+-- Tiempo de generación: 16-11-2016 a las 03:39:38
 -- Versión del servidor: 5.6.21
 -- Versión de PHP: 5.6.3
 
@@ -307,6 +307,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_InfoCompra` (IN `_codigo` INT)  
 SELECT c.id_compras,
 	   c.fecha_compra,
        c.valor_total AS total,
+       p.id_persona,
        CONCAT(p.nombres, ' ', p.apellidos) AS proveedor,
        CONCAT(e.nombres, ' ', e.apellidos) AS empleado FROM tbl_compras c JOIN tbl_persona p ON p.id_persona = c.Tbl_Persona_id_persona_proveedor 
 JOIN tbl_persona e ON c.Tbl_Persona_id_persona_empleado = e.id_persona WHERE id_compras = _codigo$$
@@ -711,7 +712,8 @@ SELECT DISTINCT
             p.genero,
             p.estado,
           	tp.Tbl_nombre_tipo_persona,
-		    v.tipo_de_pago						
+		    v.tipo_de_pago,
+            v.estado_credito
           FROM tbl_persona p 
           JOIN tbl_tipopersona tp 
           ON tp.idTbl_tipo_persona = Tbl_TipoPersona_idTbl_TipoPersona
@@ -1086,6 +1088,9 @@ UPDATE tbl_configuracion SET tiempo_pago = _tiempo_pago, Valor_dia = _valor_dia,
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_modificar_persona` (IN `_nombres` VARCHAR(50), IN `_apellidos` VARCHAR(50), IN `_celular` VARCHAR(20), IN `_email` VARCHAR(50), IN `_telefono` VARCHAR(50), IN `_direccion` VARCHAR(50), IN `_fecha_contrato` DATE, IN `_genero` VARCHAR(30), IN `_tipoPersona` INT(11), IN `_fecha_terminacion` DATE, IN `_id_persona` VARCHAR(50))  NO SQL
 UPDATE tbl_persona SET nombres = _nombres, apellidos= _apellidos, celular= _celular, email= _email, telefono= _telefono, direccion= _direccion, fecha_Contrato = _fecha_contrato, genero = _genero, Tbl_TipoPersona_idTbl_TipoPersona = _tipoPersona, fecha_Terminacion_Contrato = DATE_ADD(_fecha_terminacion, INTERVAL 12 MONTH) WHERE id_persona = _id_persona$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_Precios` (IN `_precio_unitario` DOUBLE, IN `_precio_detal` DOUBLE, IN `_precio_por_mayor` DOUBLE, IN `_id_producto` INT)  NO SQL
+UPDATE tbl_productos SET precio_unitario = _precio_unitario, precio_detal = _precio_detal, precio_por_mayor = _precio_por_mayor WHERE id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_producto` (IN `_id_producto` INT, IN `_nombre_producto` VARCHAR(50), IN `_precio_detal` DOUBLE, IN `_precio_por_mayor` DOUBLE, IN `_precio_unitario` DOUBLE, IN `_Tbl_Categoria_idcategoria` INT, IN `_talla` VARCHAR(50), IN `_tamano` VARCHAR(100), IN `_stock` INT)  NO SQL
 UPDATE tbl_productos SET nombre_producto = _nombre_producto, precio_detal = _precio_detal, precio_por_mayor = _precio_por_mayor, precio_unitario = _precio_unitario, Tbl_Categoria_idcategoria = _Tbl_Categoria_idcategoria, talla = _talla, tamano = _tamano, stock_minimo = _stock WHERE id_producto = _id_producto$$
@@ -1677,7 +1682,7 @@ INSERT INTO `tbl_menu` (`id_menu`, `url_menu`, `texto_menu`, `icono_menu`, `padr
 (39, 'Compras/informeproducto', 'Reporte Entradas', NULL, 12, 3),
 (40, 'Ventas/informeVentas', 'Reporte Ventas', NULL, 15, 4),
 (41, 'producto/informeBajas', 'Reporte Bajas', NULL, 5, 4),
-(42, 'Ventas/informeGanancias', 'Listar Promedio Ganancías', NULL, 15, 5);
+(42, 'Ventas/informeGanancias', 'Indicador Promedio Ganancías', NULL, 15, 5);
 
 -- --------------------------------------------------------
 
@@ -1805,7 +1810,9 @@ INSERT INTO `tbl_paginas` (`codigo_paginas`, `nombre`, `url`, `estado`) VALUES
 (106, 'Ventas/listarclientecredito', 'Ventas/listarClientesCredito', 1),
 (107, 'Ventas/registrarCliente', 'Ventas/registrarCliente', 1),
 (108, 'otro/index2', 'otro/index2', 1),
-(109, 'Compras/registrarProducto', 'Compras/registrarProducto', 1);
+(109, 'Compras/registrarProducto', 'Compras/registrarProducto', 1),
+(110, 'producto/obtenerProductos2', 'producto/obtenerProductos2', 1),
+(111, 'ventas/pdfdetalles', 'Ventas/generarpdfDetallesVentas2', 1);
 
 -- --------------------------------------------------------
 
@@ -2035,7 +2042,9 @@ INSERT INTO `tbl_pagina_rol` (`codigo_paginas`, `Tbl_rol_id_rol`, `Tbl_Paginas_c
 (218, 3, 108, 1),
 (219, 3, 109, 1),
 (220, 2, 108, 1),
-(221, 1, 108, 1);
+(221, 1, 108, 1),
+(222, 3, 110, 1),
+(223, 3, 111, 1);
 
 -- --------------------------------------------------------
 
@@ -2180,7 +2189,7 @@ CREATE TABLE `tbl_productos` (
 --
 
 INSERT INTO `tbl_productos` (`id_producto`, `nombre_producto`, `estado`, `precio_detal`, `precio_por_mayor`, `precio_unitario`, `Tbl_Categoria_idcategoria`, `talla`, `tamano`, `stock_minimo`, `cantidad`) VALUES
-(1, 'Camisa', 1, 3500, 3300, 2000, 1, 'M', '', 5, 15),
+(1, 'Camisa', 1, 3600, 3400, 2200, 1, 'M', '', 5, 15),
 (2, 'Gorro', 1, 6000, 5400, 5000, 2, '', 'mediano', 5, 1),
 (3, 'Mochila', 1, 3500, 3200, 3000, 2, '', 'pequeña', 5, 0),
 (4, 'Pipa', 1, 3000, 2600, 2500, 3, '', 'mediano', 10, 38),
@@ -2715,12 +2724,12 @@ ALTER TABLE `tbl_menu`
 -- AUTO_INCREMENT de la tabla `tbl_paginas`
 --
 ALTER TABLE `tbl_paginas`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=110;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagina_rol`
 --
 ALTER TABLE `tbl_pagina_rol`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=222;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=224;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagoempleados`
 --
@@ -2755,7 +2764,7 @@ ALTER TABLE `tbl_rol_menu`
 -- AUTO_INCREMENT de la tabla `tbl_ventas`
 --
 ALTER TABLE `tbl_ventas`
-  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 --
 -- Restricciones para tablas volcadas
 --
