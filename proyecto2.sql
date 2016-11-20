@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-11-2016 a las 03:39:38
+-- Tiempo de generación: 20-11-2016 a las 05:43:54
 -- Versión del servidor: 5.6.21
 -- Versión de PHP: 5.6.3
 
@@ -17,7 +17,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `bioartsoft`
+-- Base de datos: `bioartsoft_2`
 --
 
 DELIMITER $$
@@ -55,39 +55,62 @@ WHERE
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Actualizar_Fecha_Limite` (IN `_id_venta` INT, IN `_dias` INT)  NO SQL
-UPDATE tbl_ventas SET fecha_limite_credito = DATE_ADD(fecha_limite_credito, INTERVAL _dias DAY) WHERE id_ventas = _id_venta$$
+UPDATE tbl_ventas 
+SET fecha_limite_credito = DATE_ADD(fecha_limite_credito, INTERVAL _dias DAY) 
+WHERE id_ventas = _id_venta$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_anularAbonoCreditos` (IN `_id` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_abono_ventas SET estado_abono =(CASE WHEN estado_abono = 1 THEN 0 ELSE 1 END) WHERE idabono = _id$$
+UPDATE tbl_abono_ventas 
+SET estado_abono =(CASE WHEN estado_abono = 1 THEN 0 ELSE 1 END) 
+WHERE idabono = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_anularAbonoPrestamos` (IN `_id` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_abono_prestamo pre SET pre.estado_abono = _estado WHERE pre.idTbl_Abono_Prestamo = _id$$
+UPDATE tbl_abono_prestamo pre 
+SET pre.estado_abono = _estado 
+WHERE pre.idTbl_Abono_Prestamo = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AnularBaja` (IN `_codigo` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_bajas SET estado = _estado WHERE id_bajas = _Codigo$$
+UPDATE tbl_bajas 
+SET estado = _estado 
+WHERE id_bajas = _Codigo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AnularCompra` (IN `_codigo` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_compras SET estado = _estado WHERE id_compras = _Codigo$$
+UPDATE tbl_compras 
+SET estado = _estado 
+WHERE id_compras = _Codigo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AnularPago` (IN `_id` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_pagoempleados SET estado = _estado WHERE id_pago = _id$$
+UPDATE tbl_pagoempleados 
+SET estado = _estado 
+WHERE id_pago = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AnularPrestamo` (IN `_id` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_prestamos pres SET pres.estado_prestamo = (CASE WHEN pres.estado_prestamo = 1 THEN 3 ELSE 1 END) WHERE pres.id_prestamos = _id$$
+UPDATE tbl_prestamos pres 
+SET pres.estado_prestamo = (CASE WHEN pres.estado_prestamo = 1 THEN 3 ELSE 1 END) 
+WHERE pres.id_prestamos = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Anular_Venta` (IN `_codigo` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_ventas SET estado = _estado WHERE id_ventas = _Codigo$$
+UPDATE tbl_ventas 
+SET estado = _estado 
+WHERE id_ventas = _Codigo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AsociarPagoaLiquidacion` (IN `_id_persona` INT)  NO SQL
-SELECT pagos.total_pago FROM tbl_pagoempleados_has_tbl_configuracion pagos JOIN tbl_pagoempleados p ON pagos.Tbl_PagoEmpleados_idpago = p.id_pago WHERE pagos.Tbl_Configuracion_idTbl_Configuracion = 1 AND P.Tbl_Persona_id_persona = _id_persona
+SELECT pagos.total_pago 
+FROM tbl_pagoempleados_has_tbl_configuracion pagos JOIN tbl_pagoempleados p ON pagos.Tbl_PagoEmpleados_idpago = p.id_pago 
+WHERE pagos.Tbl_Configuracion_idTbl_Configuracion = 1 
+AND P.Tbl_Persona_id_persona = _id_persona
 ORDER BY pagos.Tbl_PagoEmpleados_idpago DESC LIMIT 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_AsociarPrimaLiquidacion` (IN `_id_persona` INT)  NO SQL
-SELECT pagos.total_pago FROM tbl_pagoempleados_has_tbl_configuracion pagos JOIN tbl_pagoempleados p ON pagos.Tbl_PagoEmpleados_idpago = p.id_pago WHERE pagos.Tbl_Configuracion_idTbl_Configuracion = 3 AND P.Tbl_Persona_id_persona = _id_persona
+SELECT pagos.total_pago 
+FROM tbl_pagoempleados_has_tbl_configuracion pagos JOIN tbl_pagoempleados p ON pagos.Tbl_PagoEmpleados_idpago = p.id_pago 
+WHERE pagos.Tbl_Configuracion_idTbl_Configuracion = 3 
+AND P.Tbl_Persona_id_persona = _id_persona
 ORDER BY pagos.Tbl_PagoEmpleados_idpago DESC LIMIT 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_borrar_proveedor` (IN `_id_proveedor` VARCHAR(50))  NO SQL
-DELETE FROM tbl_proveedor WHERE Tbl_Persona_id_persona = _id_proveedor$$
+DELETE FROM tbl_proveedor 
+WHERE Tbl_Persona_id_persona = _id_proveedor$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Buscar_Usuario` (IN `_nombre_usuario` VARCHAR(50))  NO SQL
 SELECT p.nombres, 
@@ -99,30 +122,45 @@ SELECT p.nombres,
        u.nombre_usuario, 
        u.Tbl_rol_id_rol AS rol, 
        r.id_rol, 
-       r.nombre_rol FROM tbl_persona p JOIN tbl_usuarios u ON p.id_persona = u.id_usuarios
-JOIN tbl_rol r ON u.Tbl_rol_id_rol = r.id_rol WHERE u.nombre_usuario = _nombre_usuario$$
+       r.nombre_rol 
+FROM tbl_persona p JOIN tbl_usuarios u ON p.id_persona = u.id_usuarios
+JOIN tbl_rol r ON u.Tbl_rol_id_rol = r.id_rol 
+WHERE u.nombre_usuario = _nombre_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Buscar_Usuario2` (IN `_nombre` VARCHAR(50))  NO SQL
-SELECT count(nombre_usuario) total FROM tbl_usuarios WHERE nombre_usuario = _nombre$$
+SELECT count(nombre_usuario) total 
+FROM tbl_usuarios 
+WHERE nombre_usuario = _nombre$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Cambiar_Estado` (IN `_id` INT)  NO SQL
-UPDATE tbl_productos SET estado = (CASE WHEN estado = 1 THEN 0 ELSE 1 END) WHERE id_producto = _id$$
+UPDATE tbl_productos 
+SET estado = (CASE WHEN estado = 1 THEN 0 ELSE 1 END) 
+WHERE id_producto = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Cambiar_Estado_Cliente` (IN `_id` VARCHAR(50))  NO SQL
-UPDATE tbl_persona SET estado = (CASE WHEN estado = 1 THEN 0 ELSE 1 END)
+UPDATE tbl_persona 
+SET estado = (CASE WHEN estado = 1 THEN 0 ELSE 1 END)
 WHERE id_persona = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Cambiar_Estado_Credito` (IN `_id_venta` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_ventas SET estado_credito = (CASE WHEN estado_credito = 1 THEN 2 ELSE 1 END) WHERE id_ventas = _id_venta$$
+UPDATE tbl_ventas 
+SET estado_credito = (CASE WHEN estado_credito = 1 THEN 2 ELSE 1 END) 
+WHERE id_ventas = _id_venta$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Cambiar_Estado_Credito2` (IN `_id_venta` INT, IN `_estado` INT)  NO SQL
-UPDATE tbl_ventas SET estado_credito = _estado WHERE id_ventas = _id_venta$$
+UPDATE tbl_ventas 
+SET estado_credito = _estado
+WHERE id_ventas = _id_venta$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Cambiar_estado_Proveedor` (IN `_id` VARCHAR(50))  NO SQL
-UPDATE tbl_persona SET estado = (CASE WHEN estado = 1 THEN 0 ELSE 1 END) WHERE id_persona = _id$$
+UPDATE tbl_persona 
+SET estado = (CASE WHEN estado = 1 THEN 0 ELSE 1 END) 
+WHERE id_persona = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Cambiar_estado_Usuario` (IN `_id` VARCHAR(50))  NO SQL
-UPDATE tbl_usuarios SET estado=(CASE WHEN estado=1 THEN 0 ELSE 1 END) WHERE id_usuarios =_id$$
+UPDATE tbl_usuarios 
+SET estado = (CASE WHEN estado = 1 THEN 0 ELSE 1 END) 
+WHERE id_usuarios = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Compras_Dia` ()  NO SQL
 SELECT
@@ -144,44 +182,57 @@ SELECT u.nombre_usuario,
        u.id_usuarios,
        p.email,
        p.id_persona
-       
-        FROM tbl_usuarios u JOIN tbl_persona p ON u.id_usuarios = p.id_persona WHERE id_persona = _id_persona$$
+FROM tbl_usuarios u JOIN tbl_persona p ON u.id_usuarios = p.id_persona WHERE id_persona = _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Configuracion` ()  NO SQL
-SELECT Porcentaje_Maximo_Dcto, Valor_Subtotal_Minimo, 	Porcentaje_Minimo_Dcto, Valor_Subtotal_Maximo FROM tbl_configuracion_ventas$$
+SELECT Porcentaje_Maximo_Dcto, Valor_Subtotal_Minimo, 	Porcentaje_Minimo_Dcto, Valor_Subtotal_Maximo 
+FROM tbl_configuracion_ventas$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Emails` (IN `_correo` VARCHAR(50), IN `_id_persona` VARCHAR(50))  NO SQL
-SELECT count(email) AS email FROM tbl_persona WHERE email = _correo AND id_persona <> _id_persona AND email <> ''$$
+SELECT count(email) AS email 
+FROM tbl_persona 
+WHERE email = _correo AND id_persona <> _id_persona AND email <> ''$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Email_Proveedor` (IN `_correo` VARCHAR(50), IN `_id_persona` VARCHAR(50))  NO SQL
-SELECT email FROM tbl_persona WHERE email = _correo AND id_persona <> _id_persona$$
+SELECT email 
+FROM tbl_persona 
+WHERE email = _correo AND id_persona <> _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Estado_Abono` ()  NO SQL
-SELECT estado_abono FROM tbl_abono_ventas$$
+SELECT estado_abono 
+FROM tbl_abono_ventas$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Nombres_Categorias` ()  NO SQL
-SELECT LOWER(nombre) AS nombre FROM tbl_categoria$$
+SELECT LOWER(nombre) AS nombre 
+FROM tbl_categoria$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Nombre_Productos` ()  NO SQL
-SELECT LOWER(nombre_producto) AS nombre FROM tbl_productos$$
+SELECT LOWER(nombre_producto) AS nombre 
+FROM tbl_productos$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Personas` ()  NO SQL
 SELECT * FROM tbl_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Proveedor_Juridico` (IN `_id_proveedor` VARCHAR(50))  NO SQL
-SELECT  Tbl_Persona_id_persona FROM tbl_proveedor WHERE Tbl_Persona_id_persona =_id_proveedor$$
+SELECT  Tbl_Persona_id_persona 
+FROM tbl_proveedor 
+WHERE Tbl_Persona_id_persona =_id_proveedor$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Total_Abono` (IN `_id_venta` INT, IN `_valor_Abono` DOUBLE)  NO SQL
-SELECT total_venta - (fn_total_abonos(_id_venta) + _valor_abono) AS total  FROM tbl_ventas WHERE id_ventas = _id_venta$$
+SELECT total_venta - (fn_total_abonos(_id_venta) + _valor_abono) AS total  FROM tbl_ventas 
+WHERE id_ventas = _id_venta$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Consultar_Usuarios` ()  NO SQL
 SELECT nombre_usuario
 FROM tbl_usuarios$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_DetalleBaja` (IN `__Tbl_Bajas_idbajas` INT, IN `_Tbl_Productos_id_productos` INT, IN `_Cantidad` INT)  NO SQL
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_DetalleBaja` (IN `_id_bajas` INT, IN `_id_productos` INT, IN `_Cantidad` INT, IN `_tipo` VARCHAR(30))  NO SQL
 BEGIN
-INSERT INTO tbl_productos_has_tbl_bajas (Tbl_Bajas_idbajas, Tbl_Productos_id_productos, Cantidad) VALUES (__Tbl_Bajas_idbajas,_Tbl_Productos_id_productos,_Cantidad);
-UPDATE tbl_productos SET cantidad = Cantidad - _Cantidad where 	id_producto = _Tbl_Productos_id_productos;
+INSERT INTO tbl_productos_has_tbl_bajas (Tbl_Bajas_idbajas, Tbl_Productos_id_productos, Cantidad,tipo_baja) 
+VALUES (_id_bajas,_id_productos,_Cantidad,_tipo);
+UPDATE tbl_productos
+SET cantidad = Cantidad - _Cantidad
+where 	id_producto = _id_productos;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_DetallePago` (IN `_id_persona` VARCHAR(50))  NO SQL
@@ -206,10 +257,13 @@ JOIN tbl_configuracion c ON d.Tbl_Configuracion_idTbl_Configuracion = c.idTbl_Co
 JOIN tbl_persona pp ON p.Tbl_Persona_id_persona = pp.id_persona
 JOIN tbl_tipopersona t ON pp.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
 JOIN tbl_pagoempleados_has_tbl_configuracion conpa ON p.id_pago = conpa.Tbl_PagoEmpleados_idpago
-WHERE p.Tbl_Persona_id_persona = _id_persona ORDER by p.fecha_pago DESC$$
+WHERE p.Tbl_Persona_id_persona = _id_persona 
+ORDER by p.fecha_pago DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_DetallesBajas` (IN `_id_Baja` INT)  NO SQL
-SELECT Tbl_Bajas_idbajas, Tbl_Productos_id_productos, Cantidad FROM tbl_productos_has_tbl_bajas WHERE Tbl_Bajas_idbajas = _id_baja$$
+SELECT Tbl_Bajas_idbajas, Tbl_Productos_id_productos, Cantidad 
+FROM tbl_productos_has_tbl_bajas 
+WHERE Tbl_Bajas_idbajas = _id_baja$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_DetallesCompra` (IN `_id_compra` INT)  NO SQL
 SELECT cp.id_detalle,
@@ -219,20 +273,25 @@ SELECT cp.id_detalle,
        p.id_producto,
        p.nombre_producto,
        p.precio_unitario,
-       (cp.valor_compra * cp.cantidad) AS total FROM
-      tbl_compras_has_tbl_productos AS cp JOIn tbl_productos AS p ON p.id_producto = cp.Tbl_Productos_id_productos WHERE Tbl_Compras_idcompras = _id_compra$$
+       (cp.valor_compra * cp.cantidad) AS total 
+FROM tbl_compras_has_tbl_productos AS cp 
+JOIn tbl_productos AS p ON p.id_producto = cp.Tbl_Productos_id_productos WHERE Tbl_Compras_idcompras = _id_compra$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Detallesproducto` (IN `_id_producto` INT)  NO SQL
-SELECT id_producto, nombre_producto, precio_unitario, precio_detal, precio_por_mayor FROM tbl_productos WHERE id_producto = _id_producto$$
+SELECT id_producto, nombre_producto, precio_unitario, precio_detal, precio_por_mayor 
+FROM tbl_productos 
+WHERE id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Detalles_Bajas` (IN `_id_baja` INT)  NO SQL
-SELECT b.id_bajas, 
-       b.fecha_salida,
-       b.estado,
-       b.tipo_baja,
-       db.cantidad
-FROM tbl_bajas b JOIN tbl_productos_has_tbl_bajas db ON db.Tbl_Bajas_idbajas = b.id_bajas
-WHERE b.id_bajas = _id_baja$$
+SELECT 
+	b.Tbl_Bajas_idbajas AS id_detalle,
+	b.tipo_baja,
+	p.nombre_producto,
+	b.Cantidad
+FROM
+	tbl_productos_has_tbl_bajas b 
+JOIN tbl_productos p ON p.id_producto = b.Tbl_Productos_id_productos
+WHERE b.Tbl_Bajas_idbajas = _id_baja$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Detalles_Venta` (IN `_id` INT)  NO SQL
 SELECT
@@ -272,36 +331,47 @@ SELECT
         v.estado, 
         v.estado_credito,
 		fn_total_abonos(v.id_ventas) AS total_abonado
-FROM tbl_ventas v  JOIN tbl_persona p 
+FROM tbl_ventas v  
+JOIN tbl_persona p 
 ON p.id_persona = v.Tbl_persona_idpersona_cliente
-WHERE p.id_persona = _id_per and v.tipo_de_pago = '1' and v.estado = 1$$
+WHERE p.id_persona = _id_per 
+and v.tipo_de_pago = '1' and v.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_getDetallePrestamos` (IN `_id_per` VARCHAR(50))  NO SQL
 SELECT
-pe.id_persona,
-CONCAT(pe.nombres, ' ', pe.apellidos) AS empleado,
-p.id_prestamos,
-p.fecha_prestamo,
-p.fecha_limite,
-p.valor_prestamo,
-p.descripcion,
-p.estado_prestamo, 
-(SELECT sum(tbp.valor) from tbl_abono_prestamo tbp WHERE tbp.Tbl_Prestamos_idprestamos = p.id_prestamos) as Total
-FROM tbl_prestamos P JOIN tbl_persona pe ON
+        pe.id_persona,
+		CONCAT(pe.nombres, ' ', pe.apellidos) AS empleado,
+		p.id_prestamos,
+		p.fecha_prestamo,
+		p.fecha_limite,
+		p.valor_prestamo,
+		p.descripcion,
+		p.estado_prestamo, 
+	(SELECT sum(tbp.valor) from tbl_abono_prestamo tbp 
+     WHERE tbp.Tbl_Prestamos_idprestamos = p.id_prestamos) as Total
+FROM tbl_prestamos P 
+JOIN tbl_persona pe ON
 pe.id_persona = p.Tbl_Persona_id_persona
 WHERE pe.id_persona = _id_per$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_getNombreCliente` (IN `_idCliente` VARCHAR(50))  NO SQL
-SELECT id_persona, CONCAT(nombres, ' ', apellidos) AS cliente FROM tbl_persona WHERE id_persona = _idCliente$$
+SELECT id_persona, CONCAT(nombres, ' ', apellidos) AS cliente 
+FROM tbl_persona
+WHERE id_persona = _idCliente$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_GuardarPersona` (IN `_id_persona` VARCHAR(50), IN `_telefono` VARCHAR(30), IN `_nombres` VARCHAR(30), IN `_email` VARCHAR(45), IN `_direccion` VARCHAR(45), IN `_apellidos` VARCHAR(30), IN `_genero` VARCHAR(20), IN `_tipo_documento` VARCHAR(40), IN `_id_tipo_persona` INT, IN `_celular` VARCHAR(12), IN `_fecha_contrato` DATE, IN `_fecha_terminacion` DATE)  NO SQL
-INSERT INTO tbl_persona(id_persona, telefono, nombres, email,	direccion, apellidos, genero, tipo_documento, Tbl_TipoPersona_idTbl_TipoPersona,celular, fecha_Contrato, fecha_Terminacion_Contrato) VALUES (_id_persona, _telefono, _nombres, _email, _direccion, _apellidos, _genero, _tipo_documento, _id_tipo_persona, _celular, _fecha_contrato, DATE_ADD(_fecha_terminacion, INTERVAL 12 MONTH))$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_GuardarPersona` (IN `_id_persona` VARCHAR(50), IN `_telefono` VARCHAR(30), IN `_nombres` VARCHAR(30), IN `_email` VARCHAR(50), IN `_direccion` VARCHAR(50), IN `_apellidos` VARCHAR(30), IN `_genero` VARCHAR(20), IN `_tipo_documento` VARCHAR(20), IN `_id_tipo_persona` INT, IN `_celular` VARCHAR(15), IN `_fecha_contrato` DATE, IN `_fecha_terminacion` DATE)  NO SQL
+INSERT INTO tbl_persona(id_persona, telefono, nombres, email,	direccion, apellidos, genero, tipo_documento, Tbl_TipoPersona_idTbl_TipoPersona, celular, fecha_Contrato, fecha_Terminacion_Contrato) 
+VALUES (_id_persona, _telefono, _nombres, _email, _direccion, _apellidos, _genero, _tipo_documento, _id_tipo_persona, _celular, _fecha_contrato, DATE_ADD(_fecha_terminacion, INTERVAL 12 MONTH))$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_guardarUsuario` (IN `_id_usuario` VARCHAR(50), IN `_clave` VARCHAR(200), IN `_nombre_usuario` VARCHAR(30), IN `_id_rol` INT)  NO SQL
-INSERT INTO Tbl_Usuarios(id_usuarios, clave, nombre_usuario, Tbl_rol_id_rol) VALUES(_id_usuario, _clave, _nombre_usuario, _id_rol)$$
+INSERT INTO Tbl_Usuarios(id_usuarios, clave, nombre_usuario, Tbl_rol_id_rol) 
+VALUES(_id_usuario, _clave, _nombre_usuario, _id_rol)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_IdEmpleado` (IN `_id` VARCHAR(50))  NO SQL
-SELECT id_persona FROM tbl_persona WHERE id_persona = _id AND Tbl_TipoPersona_idTbl_TipoPersona IN (1,2)$$
+SELECT id_persona 
+FROM tbl_persona 
+WHERE id_persona = _id 
+AND Tbl_TipoPersona_idTbl_TipoPersona IN (1,2)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_InfoCompra` (IN `_codigo` INT)  NO SQL
 SELECT c.id_compras,
@@ -309,29 +379,35 @@ SELECT c.id_compras,
        c.valor_total AS total,
        p.id_persona,
        CONCAT(p.nombres, ' ', p.apellidos) AS proveedor,
-       CONCAT(e.nombres, ' ', e.apellidos) AS empleado FROM tbl_compras c JOIN tbl_persona p ON p.id_persona = c.Tbl_Persona_id_persona_proveedor 
+       CONCAT(e.nombres, ' ', e.apellidos) AS empleado 
+FROM tbl_compras c 
+JOIN tbl_persona p ON p.id_persona = c.Tbl_Persona_id_persona_proveedor 
 JOIN tbl_persona e ON c.Tbl_Persona_id_persona_empleado = e.id_persona WHERE id_compras = _codigo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Bajas` ()  NO SQL
-SELECT pro.nombre_producto,
-       p.Tbl_Bajas_idbajas,
-       b.fecha_salida,
-       b.tipo_baja,
+SELECT
+       DATE_FORMAT(b.fecha_salida, '%Y-%m-%d') AS fecha_salida,
+       b.id_persona_empleado,
        b.estado,
        b.id_bajas,
-       p.Tbl_Productos_id_productos,
-       p.Cantidad,
+       db.Tbl_Bajas_idbajas,
+       db.Tbl_Productos_id_productos,
+       db.Cantidad,
+       db.tipo_baja,
        pro.Tbl_Categoria_idcategoria,
-      c.nombre FROM tbl_productos pro JOIN tbl_productos_has_tbl_bajas p ON 
-pro.id_producto = p.Tbl_Productos_id_productos JOIN
-tbl_categoria c ON
-pro.Tbl_Categoria_idcategoria = c.id_categoria 
-JOIN
-tbl_bajas b ON b.id_bajas = p.Tbl_Bajas_idbajas WHERE b.estado = 1 ORDER BY b.fecha_salida DESC$$
+       c.nombre,
+       CONCAT(pro.nombre_producto, ' ', pro.talla) AS nombre_producto,
+       p.id_persona,
+       CONCAT(p.nombres, ' ', p.apellidos) AS empleado
+FROM tbl_productos pro 
+JOIN tbl_categoria c on c.id_categoria = pro.Tbl_Categoria_idcategoria JOIN tbl_productos_has_tbl_bajas db ON db.Tbl_Productos_id_productos = pro.id_producto 
+JOIN tbl_bajas b ON b.id_bajas = db.Tbl_Bajas_idbajas 
+JOIN tbl_persona p ON p.id_persona = b.id_persona_empleado 
+WHERE b.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Bajas_Por_fecha` (IN `_fecha_inicial` TIMESTAMP, IN `_fecha_final` TIMESTAMP)  NO SQL
 BEGIN
-SET lc_time_names = 'es_VE';
+SET lc_time_names = 'es_CO';
 
 SELECT 
        p.id_producto,
@@ -339,7 +415,7 @@ SELECT
        c.nombre,
        b.fecha_salida,
        DATE_FORMAT(b.fecha_salida, '%M') AS fecha,
-       b.tipo_baja,
+       db.tipo_baja,
        db.cantidad
 FROM tbl_productos p JOIN tbl_categoria c ON c.id_categoria = p.Tbl_Categoria_idcategoria JOIN
 tbl_productos_has_tbl_bajas db ON p.id_producto = db.Tbl_Productos_id_productos JOIN tbl_bajas b ON b.id_bajas = db.Tbl_Bajas_idbajas where DATE_FORMAT(b.fecha_salida, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND b.estado = 1 ORDER BY b.fecha_salida desc;
@@ -358,8 +434,10 @@ select c.id_compras,
        c.Tbl_Persona_id_persona_proveedor, 
        c.Tbl_Persona_id_persona_empleado,
        CONCAT (p.nombres, ' ', p.apellidos) AS proveedor
-       from tbl_compras c JOIN tbl_persona p ON c.Tbl_Persona_id_persona_proveedor = p.id_persona
-where DATE_FORMAT(fecha_compra, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND c.estado = 1 ORDER BY c.id_compras desc;
+from tbl_compras c JOIN tbl_persona p ON c.Tbl_Persona_id_persona_proveedor = p.id_persona
+where DATE_FORMAT(fecha_compra, '%Y-%m-%d')
+BETWEEN _fecha_inicial and _fecha_final AND c.estado = 1 
+ORDER BY c.id_compras desc;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Pagos` ()  NO SQL
@@ -373,9 +451,13 @@ SELECT DISTINCT p.id_persona,
                 pe.valorComision,
                 dp.total_pago,
                 cp.tipo_pago
-FROM tbl_persona p JOIN tbl_tipopersona t ON p.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
+FROM tbl_persona p 
+JOIN tbl_tipopersona t ON p.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
 JOIN tbl_pagoempleados pe ON pe.Tbl_Persona_id_persona = p.id_persona
-JOIN tbl_pagoempleados_has_tbl_configuracion dp ON dp.Tbl_PagoEmpleados_idpago = pe.id_pago JOIN tbl_configuracion cp ON cp.idTbl_Configuracion = dp.Tbl_Configuracion_idTbl_Configuracion WHERE pe.estado = 1 ORDER BY pe.fecha_pago DESC$$
+JOIN tbl_pagoempleados_has_tbl_configuracion dp ON dp.Tbl_PagoEmpleados_idpago = pe.id_pago 
+JOIN tbl_configuracion cp ON cp.idTbl_Configuracion = dp.Tbl_Configuracion_idTbl_Configuracion 
+WHERE pe.estado = 1 
+ORDER BY pe.fecha_pago DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Pagos2` (IN `_id_persona` VARCHAR(50))  NO SQL
 SELECT DISTINCT p.id_persona, 
@@ -388,9 +470,12 @@ SELECT DISTINCT p.id_persona,
                 pe.valorComision,
                 dp.total_pago,
                 cp.tipo_pago
-FROM tbl_persona p JOIN tbl_tipopersona t ON p.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
+FROM tbl_persona p 
+JOIN tbl_tipopersona t ON p.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
 JOIN tbl_pagoempleados pe ON pe.Tbl_Persona_id_persona = p.id_persona
-JOIN tbl_pagoempleados_has_tbl_configuracion dp ON dp.Tbl_PagoEmpleados_idpago = pe.id_pago JOIN tbl_configuracion cp ON cp.idTbl_Configuracion = dp.Tbl_Configuracion_idTbl_Configuracion WHERE p.id_persona = _id_persona AND pe.estado = 1 ORDER BY pe.fecha_pago DESC$$
+JOIN tbl_pagoempleados_has_tbl_configuracion dp ON dp.Tbl_PagoEmpleados_idpago = pe.id_pago JOIN tbl_configuracion cp ON cp.idTbl_Configuracion = dp.Tbl_Configuracion_idTbl_Configuracion 
+WHERE p.id_persona = _id_persona AND pe.estado = 1 
+ORDER BY pe.fecha_pago DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Prestamos` ()  NO SQL
 SELECT DISTINCT p.id_persona, 
@@ -402,7 +487,8 @@ SELECT DISTINCT p.id_persona,
                 pre.descripcion,
                 pre.fecha_limite,
                 pre.fecha_prestamo
-                FROM tbl_persona p JOIN tbl_prestamos pre on p.id_persona = pre.Tbl_Persona_id_persona
+FROM tbl_persona p 
+JOIN tbl_prestamos pre on p.id_persona = pre.Tbl_Persona_id_persona
 JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
 WHERE pre.estado_prestamo = 1 OR pre.estado_prestamo = 3$$
 
@@ -414,8 +500,11 @@ SELECT DISTINCT p.id_persona,
        pres.valor_prestamo,
        pres.descripcion,
        pres.fecha_limite
-from tbl_persona p JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona JOIN tbl_prestamos pres ON pres.Tbl_Persona_id_persona = p.id_persona 
-WHERE p.id_persona = _id_persona AND pres.estado_prestamo IN (1, 3) ORDER BY pres.fecha_prestamo DESC$$
+from tbl_persona p 
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona 
+JOIN tbl_prestamos pres ON pres.Tbl_Persona_id_persona = p.id_persona 
+WHERE p.id_persona = _id_persona AND pres.estado_prestamo IN (1, 3) 
+ORDER BY pres.fecha_prestamo DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Ventas` (IN `_fecha_inicial` TIMESTAMP, IN `_fecha_final` TIMESTAMP)  NO SQL
 BEGIN
@@ -432,8 +521,11 @@ select v.id_ventas,
        v.Tbl_Persona_idpersona_empleado,
        v.tipo_de_pago,
        CONCAT (p.nombres, ' ', p.apellidos) AS cliente
-       from tbl_ventas v JOIN tbl_persona p ON v.Tbl_persona_idpersona_cliente = p.id_persona
-where DATE_FORMAT(fecha_venta, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND v.estado = 1 ORDER BY v.fecha_venta DESC;
+from tbl_ventas v 
+JOIN tbl_persona p ON v.Tbl_persona_idpersona_cliente = p.id_persona
+where DATE_FORMAT(fecha_venta, '%Y-%m-%d') 
+BETWEEN _fecha_inicial and _fecha_final AND v.estado = 1 
+ORDER BY v.fecha_venta DESC;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Info_Baja` (IN `_id_baja` INT)  NO SQL
@@ -441,10 +533,14 @@ SELECT b.id_persona_empleado,
 	   b.id_bajas,
        CONCAT(per.nombres, ' ', per.apellidos) AS empleado,
        per.estado
- FROM tbl_persona per JOIN tbl_bajas b ON b.id_persona_empleado = per.id_persona WHERE b.id_bajas = _id_baja$$
+ FROM tbl_persona per 
+ JOIN tbl_bajas b ON b.id_persona_empleado = per.id_persona 
+ WHERE b.id_bajas = _id_baja$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Info_Producto` (IN `_id_producto` INT)  NO SQL
-SELECT id_producto, nombre_producto FROM tbl_productos WHERE id_producto = _id_producto$$
+SELECT id_producto, nombre_producto 
+FROM tbl_productos 
+WHERE id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Info_Venta` (IN `_id_venta` INT)  NO SQL
 SELECT p.Tbl_TipoPersona_idTbl_TipoPersona,
@@ -457,19 +553,26 @@ SELECT p.Tbl_TipoPersona_idTbl_TipoPersona,
        v.Tbl_Persona_idpersona_empleado,
        v.tipo_de_pago,
        CONCAT(e.nombres, ' ', e.apellidos) AS empleado,
-       CONCAT(p.nombres, ' ', p.apellidos) as cliente FROM tbl_ventas v JOIN tbl_persona p ON p.id_persona = v.Tbl_persona_idpersona_cliente
+       CONCAT(p.nombres, ' ', p.apellidos) as cliente 
+FROM tbl_ventas v 
+JOIN tbl_persona p ON p.id_persona = v.Tbl_persona_idpersona_cliente
 JOIN tbl_persona e ON v.Tbl_Persona_idpersona_empleado = e.id_persona WHERE id_ventas = _id_venta$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_InsertarBaja` (IN `_tipo_baja` VARCHAR(50), IN `_id_persona` VARCHAR(50))  NO SQL
-INSERT INTO tbl_bajas(tipo_baja, id_persona_empleado) VALUES(_tipo_baja, _id_persona)$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_InsertarBaja` (IN `_id_persona` VARCHAR(50))  NO SQL
+INSERT INTO tbl_bajas(id_persona_empleado) 
+VALUES(_id_persona)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_insertarCompra` (IN `_valor_total` DOUBLE, IN `_proveedor` VARCHAR(50), IN `_id_empleado` VARCHAR(50))  NO SQL
-INSERT INTO tbl_compras (valor_total, Tbl_Persona_id_persona_proveedor, 	Tbl_Persona_id_persona_empleado) VALUES (_valor_total, _proveedor, _id_empleado)$$
+INSERT INTO tbl_compras (valor_total, Tbl_Persona_id_persona_proveedor, 	Tbl_Persona_id_persona_empleado) 
+VALUES (_valor_total, _proveedor, _id_empleado)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_insertarDetalleCompra` (IN `_id_producto` INT, IN `_id_compra` INT, IN `_cantidad` INT, IN `_precio_compra` DOUBLE)  NO SQL
 BEGIN
-INSERT INTO tbl_compras_has_tbl_productos (Tbl_Compras_idcompras, Tbl_Productos_id_productos, cantidad, valor_compra) VALUES (_id_compra, _id_producto, _cantidad, _precio_compra);
-UPDATE tbl_productos SET cantidad = cantidad + _cantidad WHERE id_producto = _id_producto;
+INSERT INTO tbl_compras_has_tbl_productos (Tbl_Compras_idcompras, Tbl_Productos_id_productos, cantidad, valor_compra) 
+VALUES (_id_compra, _id_producto, _cantidad, _precio_compra);
+UPDATE tbl_productos 
+SET cantidad = cantidad + _cantidad 
+WHERE id_producto = _id_producto;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_InsertarDetalleVenta` (IN `_codigoProducto` INT, IN `_codigoVenta` INT, IN `_cantidad` INT, IN `_precio_producto` DOUBLE, IN `_precio_unitario` DOUBLE)  NO SQL
@@ -491,7 +594,9 @@ VALUES
         _precio_unitario
 	);
 
-UPDATE tbl_productos SET cantidad = cantidad - _cantidad WHERE id_producto = _codigoProducto;
+UPDATE tbl_productos 
+SET cantidad = cantidad - _cantidad 
+WHERE id_producto = _codigoProducto;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_InsertarVenta` (IN `_valorSubtotal` DOUBLE, IN `_descuento` DOUBLE, IN `_valorTotal` DOUBLE, IN `_codigoCliente` VARCHAR(50), IN `_tipoPago` INT, IN `_empleado` VARCHAR(50))  NO SQL
@@ -518,10 +623,12 @@ VALUES(
 	)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Insertar_Proveedor` (IN `_nit` VARCHAR(50), IN `_empresa` VARCHAR(50), IN `_telefono` VARCHAR(50), IN `_id_persona` VARCHAR(50))  NO SQL
-INSERT INTO tbl_proveedor(nit,	empresa, telefono_empresa, Tbl_Persona_id_persona) VALUES(_nit, _empresa, _telefono, __id_persona)$$
+INSERT INTO tbl_proveedor(nit,	empresa, telefono_empresa, Tbl_Persona_id_persona) 
+VALUES(_nit, _empresa, _telefono, __id_persona)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Insertar_Proveedor_Juridico` (IN `_nit` VARCHAR(50), IN `_empresa` VARCHAR(50), IN `_telefono` VARCHAR(50), IN `_id_persona` VARCHAR(50))  NO SQL
-INSERT INTO tbl_proveedor(nit,	empresa, telefono_empresa, Tbl_Persona_id_persona) VALUES(_nit, _empresa, _telefono, _id_persona)$$
+INSERT INTO tbl_proveedor(nit,	empresa, telefono_empresa, Tbl_Persona_id_persona) 
+VALUES(_nit, _empresa, _telefono, _id_persona)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Insertar_venta_Credito` (IN `_valorSubtotal` DOUBLE, IN `_descuento` DOUBLE, IN `_valorTotal` DOUBLE, IN `_codigoCliente` VARCHAR(50), IN `_tipoPago` INT, IN `_empleado` VARCHAR(50), IN `_fecha_limite` INT)  NO SQL
 INSERT INTO tbl_ventas (subtotal_venta, descuento,
@@ -537,7 +644,10 @@ SELECT p.idTbl_Abono_Prestamo,
        DATE_FORMAT(p.fecha_abono, '%Y-%m-%d') AS fecha_abono, 
        p.estado_abono, 
        p.Tbl_Prestamos_idprestamos, 
-       p.valor FROM tbl_abono_prestamo p WHERE p.Tbl_Prestamos_idprestamos = id_prestamo ORDER BY p.fecha_abono DESC$$
+       p.valor 
+FROM tbl_abono_prestamo p 
+WHERE p.Tbl_Prestamos_idprestamos = id_prestamo 
+ORDER BY p.fecha_abono DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listarAbonosCreditosV` (IN `id_VentaCredito` INT)  NO SQL
 SELECT DATE_FORMAT(v.fechaAbono, '%Y-%m-%d') AS fechaAbono, 
@@ -546,29 +656,23 @@ SELECT DATE_FORMAT(v.fechaAbono, '%Y-%m-%d') AS fechaAbono,
        v.estado_abono,
        v.idabono,
        CONCAT(p.nombres, ' ', p.apellidos) AS empleado
-FROM tbl_abono_ventas v JOIN tbl_persona p ON p.id_persona = v.Id_empleado_abono
+FROM tbl_abono_ventas v 
+JOIN tbl_persona p ON p.id_persona = v.Id_empleado_abono
 WHERE v.Tbl_Ventas_idventas = id_VentaCredito 
 ORDER BY v.fechaAbono DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ListarBajas` ()  NO SQL
-SELECT pro.nombre_producto,
-       p.Tbl_Bajas_idbajas,
-       date_format(b.fecha_salida, '%Y-%m-%d') AS fecha_salida,
-       b.tipo_baja,
-       b.estado,
-       b.id_bajas,
-       p.Tbl_Productos_id_productos,
-       p.Cantidad,
-       pro.Tbl_Categoria_idcategoria,
-      c.nombre FROM tbl_productos pro JOIN tbl_productos_has_tbl_bajas p ON 
-pro.id_producto = p.Tbl_Productos_id_productos JOIN
-tbl_categoria c ON
-pro.Tbl_Categoria_idcategoria = c.id_categoria 
-JOIN
-tbl_bajas b ON b.id_bajas = p.Tbl_Bajas_idbajas ORDER BY b.fecha_salida DESC$$
+SELECT b.id_bajas,b.id_persona_empleado, 
+			CONCAT_WS(' ', p.id_persona, '-', p.nombres, p.apellidos) AS nombre_persona, 
+			b.estado,
+       date_format(b.fecha_salida, '%Y-%m-%d') AS fecha_salida
+FROM tbl_bajas b 
+JOIN tbl_persona p ON p.id_persona = b.id_persona_empleado$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listarCateg` (IN `_id_categoria` VARCHAR(50))  NO SQL
-SELECT * FROM tbl_categoria WHERE id_categoria = _id_categoria$$
+SELECT * 
+FROM tbl_categoria 
+WHERE id_categoria = _id_categoria$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ListarClientes` ()  NO SQL
 SELECT
@@ -578,7 +682,7 @@ SELECT
 	direccion,
     estado,
     Tbl_TipoPersona_idTbl_TipoPersona, 
-		Tbl_TipoPersona_idTbl_TipoPersona AS tipo, 
+	Tbl_TipoPersona_idTbl_TipoPersona AS tipo, 
 	(CASE WHEN Tbl_TipoPersona_idTbl_TipoPersona = 5 THEN 'Frecuente' ELSE 'No frecuente' END) AS tipo_cliente  
 FROM
 	tbl_persona
@@ -593,9 +697,11 @@ SELECT
 	direccion,
     estado,
     Tbl_TipoPersona_idTbl_TipoPersona, 
-		Tbl_TipoPersona_idTbl_TipoPersona AS tipo, 
+	Tbl_TipoPersona_idTbl_TipoPersona AS tipo, 
 	(CASE WHEN Tbl_TipoPersona_idTbl_TipoPersona = 5 THEN 'Frecuente' ELSE 'No frecuente' END) AS tipo_cliente,
-	(SELECT COUNT(v.id_ventas) FROM tbl_ventas v WHERE v.Tbl_persona_idpersona_cliente = id_persona AND tipo_de_pago = 1 AND v.estado = 1 AND (v.estado_credito = 1 OR v.estado_credito = 2)) AS total_creditos
+	(SELECT COUNT(v.id_ventas) 
+     FROM tbl_ventas v 
+     WHERE v.Tbl_persona_idpersona_cliente = id_persona AND tipo_de_pago = 1 AND v.estado = 1 AND (v.estado_credito = 1 OR v.estado_credito = 2)) AS total_creditos
 FROM
 	tbl_persona
 WHERE Tbl_TipoPersona_idTbl_TipoPersona  IN (5, 6);
@@ -609,8 +715,8 @@ SELECT c.id_compras,
        c.estado, 
        p.id_persona,
        CONCAT(p.nombres, ' ', p.apellidos) AS proveedor
-FROM tbl_compras c JOIN tbl_persona p 
-ON p.id_persona = c.Tbl_Persona_id_persona_proveedor 
+FROM tbl_compras c 
+JOIN tbl_persona p ON p.id_persona = c.Tbl_Persona_id_persona_proveedor 
 ORDER BY id_compras DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ListarEmpleadoFijo` ()  NO SQL
@@ -681,7 +787,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listarProveedorJuridico` ()  NO 
 SELECT p.id_persona, 
        CONCAT(p.nombres, ' ', p.apellidos) As nombres,
        p.estado,
-       tp.Tbl_nombre_tipo_persona AS Tipo_proveedor FROM tbl_persona p JOIN tbl_tipopersona tp ON p.Tbl_TipoPersona_idTbl_TipoPersona = tp.idTbl_tipo_persona  WHERE Tbl_TipoPersona_idTbl_TipoPersona IN (3,4)$$
+       tp.Tbl_nombre_tipo_persona AS Tipo_proveedor 
+FROM tbl_persona p 
+JOIN tbl_tipopersona tp ON p.Tbl_TipoPersona_idTbl_TipoPersona = tp.idTbl_tipo_persona  
+WHERE Tbl_TipoPersona_idTbl_TipoPersona IN (3,4)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ListarUsuario` (IN `_id_usuario` VARCHAR(50))  NO SQL
 SELECT
@@ -696,11 +805,16 @@ SELECT
           WHERE u.id_usuarios = _id_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listarVentasEmpleID` (IN `_id_persona` VARCHAR(50), IN `_fecha_inicial` DATE, IN `_fecha_final` DATE)  NO SQL
-SELECT SUM(ven.total_venta) as Total FROM tbl_ventas ven WHERE ven.Tbl_Persona_idpersona_empleado = _id_persona AND DATE_FORMAT(ven.fecha_venta, '%Y-%m-%d') BETWEEN _fecha_inicial AND
+SELECT SUM(ven.total_venta) as Total 
+FROM tbl_ventas ven 
+WHERE ven.Tbl_Persona_idpersona_empleado = _id_persona AND DATE_FORMAT(ven.fecha_venta, '%Y-%m-%d') 
+BETWEEN _fecha_inicial AND
 _fecha_final$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_categoria` ()  NO SQL
-SELECT id_categoria, nombre FROM tbl_categoria order by id_categoria desc$$
+SELECT id_categoria, nombre 
+FROM tbl_categoria 
+order by id_categoria desc$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Cliente_Creditos_Ventas` ()  NO SQL
 SELECT DISTINCT
@@ -721,19 +835,27 @@ SELECT DISTINCT
           ON v.Tbl_persona_idpersona_cliente = p.id_persona 
           WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN(5, 6) 
           AND v.tipo_de_pago = 1
-          GROUP BY p.id_persona ORDER BY v.estado_credito = 1 DESC$$
+          GROUP BY p.id_persona 
+          ORDER BY v.estado_credito = 1 DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_configuracion` ()  NO SQL
-SELECT tipo_pago, tiempo_pago, Valor_dia, porcentaje_comision, valor_base, idTbl_Configuracion FROM Tbl_configuracion WHERE idTbl_Configuracion = 1$$
+SELECT tipo_pago, tiempo_pago, Valor_dia, porcentaje_comision, valor_base, idTbl_Configuracion 
+FROM Tbl_configuracion 
+WHERE idTbl_Configuracion = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Configuracion2` ()  NO SQL
-SELECT tipo_pago, tiempo_pago, porcentaje_comision, valor_base, idTbl_Configuracion FROM Tbl_configuracion WHERE idTbl_Configuracion = 2$$
+SELECT tipo_pago, tiempo_pago, porcentaje_comision, valor_base, idTbl_Configuracion 
+FROM Tbl_configuracion
+WHERE idTbl_Configuracion = 2$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Configuracion3` ()  NO SQL
-SELECT tipo_pago, tiempo_pago, porcentaje_comision, valor_base, idTbl_Configuracion FROM Tbl_configuracion WHERE idTbl_Configuracion = 3$$
+SELECT tipo_pago, tiempo_pago, porcentaje_comision, valor_base, idTbl_Configuracion 
+FROM Tbl_configuracion 
+WHERE idTbl_Configuracion = 3$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Configuracion_Pagos` ()  NO SQL
-SELECT idTbl_Configuracion, tipo_pago FROM Tbl_configuracion$$
+SELECT idTbl_Configuracion, tipo_pago 
+FROM Tbl_configuracion$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Configuracion_Venta` ()  NO SQL
 SELECT Valor_Subtotal_Maximo, 
@@ -765,10 +887,11 @@ SELECT
             p.genero,
             u.estado,
           	tp.Tbl_nombre_tipo_persona
-          FROM
-          	tbl_rol r JOIN tbl_usuarios u ON r.id_rol = u.Tbl_rol_id_rol
-            JOIN tbl_persona p ON p.id_persona = u.id_usuarios
-            JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona WHERE p.Tbl_TipoPersona_idTbl_TipoPersona = '1'$$
+FROM tbl_rol r 
+JOIN tbl_usuarios u ON r.id_rol = u.Tbl_rol_id_rol
+JOIN tbl_persona p ON p.id_persona = u.id_usuarios
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona 
+WHERE p.Tbl_TipoPersona_idTbl_TipoPersona = '1'$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_informe` ()  NO SQL
 select p.id_producto,
@@ -779,7 +902,8 @@ select p.id_producto,
        p.cantidad,
        p.estado,
        p.precio_unitario
-    from tbl_productos p join tbl_categoria c on p.Tbl_Categoria_idcategoria = c.id_categoria WHERE p.estado = 1$$
+from tbl_productos p 
+join tbl_categoria c on p.Tbl_Categoria_idcategoria = c.id_categoria WHERE p.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_PersClienteID` (IN `_id_cliente` VARCHAR(50))  NO SQL
 SELECT
@@ -795,9 +919,9 @@ SELECT
             p.estado,
           	tp.Tbl_nombre_tipo_persona,
             tp.idTbl_tipo_persona
-			FROM tbl_persona p 
-            JOIN  tbl_tipopersona tp ON      							 			tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
-						WHERE p.id_persona = _id_cliente$$
+FROM tbl_persona p 
+JOIN  tbl_tipopersona tp ON      							tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
+WHERE p.id_persona = _id_cliente$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_PersEmpleado_FijoID` (IN `_id_usuario` VARCHAR(50))  NO SQL
 SELECT
@@ -818,11 +942,11 @@ SELECT
             u.estado,
           	tp.Tbl_nombre_tipo_persona,
             tp.idTbl_tipo_persona,
-						u.Tbl_rol_id_rol AS rol
-         FROM
-          	tbl_rol r JOIN tbl_usuarios u ON r.id_rol = u.Tbl_rol_id_rol
-            JOIN tbl_persona p ON p.id_persona = u.id_usuarios
-            JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona WHERE u.id_usuarios = _id_usuario$$
+			 u.Tbl_rol_id_rol AS rol
+FROM tbl_rol r JOIN tbl_usuarios u ON r.id_rol = u.Tbl_rol_id_rol
+JOIN tbl_persona p ON p.id_persona = u.id_usuarios
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
+WHERE u.id_usuarios = _id_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_Personas_Clientes` ()  NO SQL
 SELECT
@@ -839,7 +963,8 @@ SELECT
             p.estado,
           	tp.Tbl_nombre_tipo_persona,
             tp.idTbl_tipo_persona
-FROM tbl_persona p JOIN  tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
+FROM tbl_persona p 
+JOIN  tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
 WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN(5, 6)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_Personas_Clientes_Reporte` ()  NO SQL
@@ -858,8 +983,10 @@ SELECT
             p.estado,
           	tp.Tbl_nombre_tipo_persona,
             tp.idTbl_tipo_persona
-FROM tbl_persona p JOIN  tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
-WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN(5, 6) AND p.estado = 1$$
+FROM tbl_persona p 
+JOIN  tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
+WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN(5, 6) 
+AND p.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_Personas_emp_fijo` ()  NO SQL
 SELECT
@@ -883,13 +1010,18 @@ SELECT
             u.estado,
           	tp.Tbl_nombre_tipo_persona,
             (SELECT max(DATE_FORMAT(pag.fecha_pago, '%Y-%m-%d'))
-            from tbl_pagoempleados pag JOIN 					tbl_pagoempleados_has_tbl_configuracion confi ON 					pag.id_pago = confi.Tbl_PagoEmpleados_idpago WHERE 					pag.Tbl_Persona_id_persona = p.id_persona AND 						confi.Tbl_Configuracion_idTbl_Configuracion = 1 and 				pag.estado = 1 ) as Fechaulti,	
-(SELECT max(pagosE.fecha_pago) FROM tbl_pagoempleados  pagosE 
+from tbl_pagoempleados pag 
+JOIN tbl_pagoempleados_has_tbl_configuracion confi ON 					pag.id_pago = confi.Tbl_PagoEmpleados_idpago 
+WHERE pag.Tbl_Persona_id_persona = p.id_persona 
+AND confi.Tbl_Configuracion_idTbl_Configuracion = 1 and 			pag.estado = 1 ) as Fechaulti,	
+(SELECT max(pagosE.fecha_pago) 
+ FROM tbl_pagoempleados  pagosE 
  JOIN tbl_pagoempleados_has_tbl_configuracion confi 
  ON pagosE.id_pago = confi.Tbl_PagoEmpleados_idpago 
  WHERE pagosE.Tbl_Persona_id_persona = p.id_persona  
  AND confi.Tbl_Configuracion_idTbl_Configuracion = 1 
- AND pagosE.fecha_pago BETWEEN CONCAT(YEAR(CURDATE()),'-06-14') 
+ AND pagosE.fecha_pago 
+ BETWEEN CONCAT(YEAR(CURDATE()),'-06-14') 
  AND CONCAT(YEAR(CURDATE()),'-06-31') 
  AND pagosE.estado = 1 AND pagosE.valor_prima <> 0)
  as fechaPPJunio
@@ -899,11 +1031,48 @@ SELECT
  JOIN tbl_persona p ON p.id_persona = u.id_usuarios
  JOIN tbl_tipopersona tp 
  ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
+ WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (1,2)$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_Personas_emp_fijo2` ()  NO SQL
+SELECT
+            u.id_usuarios,
+          	u.nombre_usuario,
+          	r.nombre_rol,
+            r.id_rol,
+          	p.id_persona,
+          	p.nombres,
+          	p.apellidos,
+            p.tipo_documento,
+          	p.celular,
+          	p.fecha_Contrato,
+            p.fecha_Terminacion_Contrato,
+          	p.email,
+            p.telefono,
+            p.direccion,
+            p.genero,
+            p.Tbl_TipoPersona_idTbl_TipoPersona,
+            p.estado,
+            u.estado,
+          	tp.Tbl_nombre_tipo_persona
+ FROM tbl_rol r 
+ JOIN tbl_usuarios u 
+ ON r.id_rol = u.Tbl_rol_id_rol
+ JOIN tbl_persona p ON p.id_persona = u.id_usuarios
+ JOIN tbl_tipopersona tp 
+ ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
  WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (1,2) AND u.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Prestamos` ()  NO SQL
-SELECT DISTINCT p.id_persona, p.nombres, p.apellidos, tp.Tbl_nombre_tipo_persona, pre.estado_prestamo FROM tbl_persona p JOIN tbl_prestamos pre on p.id_persona = pre.Tbl_Persona_id_persona
-JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona WHERE pre.estado_prestamo = 1 OR pre.estado_prestamo = 3$$
+SELECT DISTINCT 
+                p.id_persona, 
+                p.nombres, 
+                p.apellidos, 
+                tp.Tbl_nombre_tipo_persona, 
+                pre.estado_prestamo 
+FROM tbl_persona p 
+JOIN tbl_prestamos pre on p.id_persona = pre.Tbl_Persona_id_persona
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona 
+WHERE pre.estado_prestamo = 1 OR pre.estado_prestamo = 3$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Prestamos_Pendientes` ()  NO SQL
 SELECT
@@ -914,7 +1083,7 @@ WHERE t.estado_prestamo = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_producto` ()  NO SQL
 SELECT  p.id_producto,  
-        p.nombre_producto, 
+        CONCAT(p.nombre_producto, ' ', p.talla) as nombre_producto, 
         p.estado,
         p.precio_detal, 
         p.precio_por_mayor, 
@@ -938,10 +1107,9 @@ SELECT
             p.genero,
             p.estado,
           	tp.Tbl_nombre_tipo_persona
-          FROM
-          	tbl_persona p
-          JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = 					p.Tbl_TipoPersona_idTbl_TipoPersona
-          WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (3, 4)$$
+FROM tbl_persona p
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = 					p.Tbl_TipoPersona_idTbl_TipoPersona
+WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (3, 4)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Proveedores_ID` (IN `_id_proveedor` VARCHAR(50))  NO SQL
 SELECT			
@@ -956,10 +1124,10 @@ SELECT
             p.estado,
             p.Tbl_TipoPersona_idTbl_TipoPersona,
            	tp.Tbl_nombre_tipo_persona
-            FROM
-          	tbl_persona p 
-          JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
-          WHERE  p.id_persona  = _id_proveedor AND p.Tbl_TipoPersona_idTbl_TipoPersona IN (3,4)$$
+FROM tbl_persona p 
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
+WHERE  p.id_persona  = _id_proveedor 
+AND p.Tbl_TipoPersona_idTbl_TipoPersona IN (3,4)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Proveedor_Jur_ID` (IN `_id_proveedor` VARCHAR(50))  NO SQL
 SELECT			
@@ -976,11 +1144,11 @@ SELECT
             prov.nit,
 			prov.empresa,
 			prov.telefono_empresa
-			FROM
-          	tbl_proveedor prov
-            JOIN tbl_persona p ON prov.Tbl_Persona_id_persona = p.id_persona
-          JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
-          WHERE  p.id_persona  = _id_proveedor AND p.Tbl_TipoPersona_idTbl_TipoPersona = 4$$
+FROM tbl_proveedor prov
+JOIN tbl_persona p ON prov.Tbl_Persona_id_persona = p.id_persona
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona
+WHERE  p.id_persona  = _id_proveedor 
+AND p.Tbl_TipoPersona_idTbl_TipoPersona = 4$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_proveedor_reporte` ()  NO SQL
 SELECT
@@ -995,21 +1163,25 @@ SELECT
             p.genero,
             p.estado,
           	tp.Tbl_nombre_tipo_persona
-          FROM
-          	tbl_persona p
-          JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = 					p.Tbl_TipoPersona_idTbl_TipoPersona
-          WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (3, 4) AND p.estado = 1$$
+FROM tbl_persona p
+JOIN tbl_tipopersona tp ON tp.idTbl_tipo_persona = 					p.Tbl_TipoPersona_idTbl_TipoPersona
+WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (3, 4) 
+AND p.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_rol` ()  NO SQL
-SELECT id_rol, nombre_rol FROM tbl_rol WHERE id_rol <> 3$$
+SELECT id_rol, nombre_rol 
+FROM tbl_rol 
+WHERE id_rol <> 3$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Roles` ()  NO SQL
-SELECT * FROM tbl_rol WHERE id_rol <> 3$$
+SELECT * FROM tbl_rol 
+WHERE id_rol <> 3$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_stockMinimo` ()  NO SQL
 SELECT 	  p.id_producto, 
           p.nombre_producto, 
-          p.estado,p.precio_detal, 
+          p.estado,
+          p.precio_detal, 
           p.precio_por_mayor, 
           p.precio_unitario, 
           p.Tbl_Categoria_idcategoria, 
@@ -1017,32 +1189,48 @@ SELECT 	  p.id_producto,
           p.tamano, 
           c.nombre, 
           p.cantidad, 
-          P.stock_minimo FROM tbl_productos p join tbl_categoria c on p.Tbl_Categoria_idcategoria = c.id_categoria WHERE p.stock_minimo >= p.cantidad AND p.estado = 1$$
+          P.stock_minimo 
+FROM tbl_productos p 
+join tbl_categoria c on p.Tbl_Categoria_idcategoria = c.id_categoria WHERE p.stock_minimo >= p.cantidad 
+AND p.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_TipoPersona_Proveedores` ()  NO SQL
-SELECT idTbl_tipo_persona, 	Tbl_nombre_tipo_persona FROM tbl_tipopersona WHERE idTbl_tipo_persona IN (3, 4)$$
+SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona 
+FROM tbl_tipopersona 
+WHERE idTbl_tipo_persona IN (3, 4)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_TipoPersona_Vendedor` ()  NO SQL
-SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona FROM tbl_tipopersona 	WHERE idTbl_tipo_persona IN (5, 6)$$
+SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona 
+FROM tbl_tipopersona 	
+WHERE idTbl_tipo_persona IN (5, 6)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Tipo_Clientes` ()  NO SQL
-SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona FROM tbl_tipopersona WHERE idTbl_tipo_persona IN(5,6)$$
+SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona 
+FROM tbl_tipopersona 
+WHERE idTbl_tipo_persona IN(5,6)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_tipo_persona` ()  NO SQL
-SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona FROM tbl_tipopersona$$
+SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona 
+FROM tbl_tipopersona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_tipo_persona_Clientes` ()  NO SQL
-SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona FROM tbl_tipopersona
+SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona 
+FROM tbl_tipopersona
 WHERE idTbl_tipo_persona IN(5,6)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_tipo_persona_Empleados` ()  NO SQL
-SELECT idTbl_tipo_persona, 	Tbl_nombre_tipo_persona FROM tbl_tipopersona WHERE idTbl_tipo_persona IN (1, 2)$$
+SELECT idTbl_tipo_persona, 	Tbl_nombre_tipo_persona 
+FROM tbl_tipopersona 
+WHERE idTbl_tipo_persona IN (1, 2)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_tipo_persona_proveedores` ()  NO SQL
-SELECT idTbl_tipo_persona, 	Tbl_nombre_tipo_persona FROM tbl_tipopersona WHERE idTbl_tipo_persona IN (3, 4)$$
+SELECT idTbl_tipo_persona, Tbl_nombre_tipo_persona 
+FROM tbl_tipopersona 
+WHERE idTbl_tipo_persona IN (3, 4)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_listar_usuarios` ()  NO SQL
-SELECT id_usuarios, nombre_usuario, clave AS Clave, estado, Tbl_rol_id_rol FROM tbl_usuarios$$
+SELECT id_usuarios, nombre_usuario, clave AS Clave, estado, Tbl_rol_id_rol 
+FROM tbl_usuarios$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Ventas` ()  NO SQL
 SELECT v.id_ventas, 
@@ -1052,7 +1240,9 @@ SELECT v.id_ventas,
        v.tipo_de_pago, 
        v.estado, 
        CONCAT(p.nombres, ' ', p.apellidos) AS cliente  
-FROM tbl_ventas v JOIN tbl_persona p ON p.id_persona = v.Tbl_persona_idpersona_cliente WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (5,6)  ORDER BY id_ventas DESC$$
+FROM tbl_ventas v 
+JOIN tbl_persona p ON p.id_persona = v.Tbl_persona_idpersona_cliente WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN (5,6)  
+ORDER BY id_ventas DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Menu` (IN `_rol` INT)  NO SQL
 SELECT
@@ -1063,65 +1253,122 @@ SELECT
             WHERE t2.id_rol = _rol
             ORDER BY
             	COALESCE (t.padre_id, t.id_menu),
-            	t.padre_id IS NULL$$
+            	t.padre_id IS NULL, t2.id_menu ASC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ModificarConfiguracionVentas` (IN `_ValSubtotal_Minimo` DOUBLE, IN `_Porcentaje_MinimoD` INT, IN `_ValSubtotal_Maximo` DOUBLE, IN `_Porcentaje_Maximo` INT)  NO SQL
-UPDATE tbl_configuracion_ventas SET Valor_Subtotal_Minimo = _ValSubtotal_Minimo, Porcentaje_Minimo_Dcto	= _Porcentaje_MinimoD, Valor_Subtotal_Maximo = _ValSubtotal_Maximo, Porcentaje_Maximo_Dcto = _Porcentaje_Maximo$$
+UPDATE tbl_configuracion_ventas 
+SET Valor_Subtotal_Minimo = _ValSubtotal_Minimo, Porcentaje_Minimo_Dcto	= _Porcentaje_MinimoD, Valor_Subtotal_Maximo = _ValSubtotal_Maximo, Porcentaje_Maximo_Dcto = _Porcentaje_Maximo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ModificarEstadoPrestamoAbonoCero` (IN `_id_prest` INT)  NO SQL
-UPDATE tbl_prestamos pre SET pre.estado_prestamo = 0 WHERE pre.id_prestamos = _id_prest$$
+UPDATE tbl_prestamos pre 
+SET pre.estado_prestamo = 0 
+WHERE pre.id_prestamos = _id_prest$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_modificarFechadeliquidacion` (IN `id_per` VARCHAR(50), IN `fecha` DATE)  NO SQL
-UPDATE tbl_persona p SET p.fecha_Terminacion_Contrato = fecha WHERE p.id_persona = id_per$$
+UPDATE tbl_persona p 
+SET p.fecha_Terminacion_Contrato = fecha 
+WHERE p.id_persona = id_per$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_modificarPrestamo` (IN `fecha_limite` DATE, IN `id_prestamos` INT)  NO SQL
-UPDATE tbl_prestamos pre SET pre.fecha_limite = fecha_limite WHERE pre.id_prestamos = id_prestamos$$
+UPDATE tbl_prestamos pre 
+SET pre.fecha_limite = fecha_limite 
+WHERE pre.id_prestamos = id_prestamos$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_categoria` (IN `_id_categoria` INT, IN `_nombre` VARCHAR(50))  NO SQL
-UPDATE tbl_categoria SET nombre = _nombre WHERE id_categoria = _id_categoria$$
+UPDATE tbl_categoria 
+SET nombre = _nombre 
+WHERE id_categoria = _id_categoria$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_modificar_clave` (IN `_id_usuario` VARCHAR(50), IN `_clave` VARCHAR(200))  NO SQL
-UPDATE tbl_usuarios SET clave = _clave WHERE id_usuarios = _id_usuario$$
+UPDATE tbl_usuarios 
+SET clave = _clave 
+WHERE id_usuarios = _id_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_Configuracion` (IN `_tiempo_pago` VARCHAR(50), IN `_valor_dia` DOUBLE, IN `_porcentage` DOUBLE, IN `_valor_base` DOUBLE)  NO SQL
-UPDATE tbl_configuracion SET tiempo_pago = _tiempo_pago, Valor_dia = _valor_dia, porcentaje_comision = _porcentage, valor_base = _valor_base WHERE idTbl_Configuracion = 1$$
+UPDATE tbl_configuracion 
+SET tiempo_pago = _tiempo_pago, Valor_dia = _valor_dia, porcentaje_comision = _porcentage, valor_base = _valor_base 
+WHERE idTbl_Configuracion = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_modificar_persona` (IN `_nombres` VARCHAR(50), IN `_apellidos` VARCHAR(50), IN `_celular` VARCHAR(20), IN `_email` VARCHAR(50), IN `_telefono` VARCHAR(50), IN `_direccion` VARCHAR(50), IN `_fecha_contrato` DATE, IN `_genero` VARCHAR(30), IN `_tipoPersona` INT(11), IN `_fecha_terminacion` DATE, IN `_id_persona` VARCHAR(50))  NO SQL
-UPDATE tbl_persona SET nombres = _nombres, apellidos= _apellidos, celular= _celular, email= _email, telefono= _telefono, direccion= _direccion, fecha_Contrato = _fecha_contrato, genero = _genero, Tbl_TipoPersona_idTbl_TipoPersona = _tipoPersona, fecha_Terminacion_Contrato = DATE_ADD(_fecha_terminacion, INTERVAL 12 MONTH) WHERE id_persona = _id_persona$$
+UPDATE tbl_persona 
+SET nombres = _nombres, 
+apellidos= _apellidos, 
+celular= _celular, 
+email= _email, 
+telefono= _telefono, 
+direccion= _direccion, 
+fecha_Contrato = _fecha_contrato, 
+genero = _genero, 
+Tbl_TipoPersona_idTbl_TipoPersona = _tipoPersona, fecha_Terminacion_Contrato = DATE_ADD(_fecha_terminacion, INTERVAL 12 MONTH) 
+WHERE id_persona = _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_Precios` (IN `_precio_unitario` DOUBLE, IN `_precio_detal` DOUBLE, IN `_precio_por_mayor` DOUBLE, IN `_id_producto` INT)  NO SQL
-UPDATE tbl_productos SET precio_unitario = _precio_unitario, precio_detal = _precio_detal, precio_por_mayor = _precio_por_mayor WHERE id_producto = _id_producto$$
+UPDATE tbl_productos 
+SET precio_unitario = _precio_unitario, precio_detal = _precio_detal, precio_por_mayor = _precio_por_mayor 
+WHERE id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_producto` (IN `_id_producto` INT, IN `_nombre_producto` VARCHAR(50), IN `_precio_detal` DOUBLE, IN `_precio_por_mayor` DOUBLE, IN `_precio_unitario` DOUBLE, IN `_Tbl_Categoria_idcategoria` INT, IN `_talla` VARCHAR(50), IN `_tamano` VARCHAR(100), IN `_stock` INT)  NO SQL
-UPDATE tbl_productos SET nombre_producto = _nombre_producto, precio_detal = _precio_detal, precio_por_mayor = _precio_por_mayor, precio_unitario = _precio_unitario, Tbl_Categoria_idcategoria = _Tbl_Categoria_idcategoria, talla = _talla, tamano = _tamano, stock_minimo = _stock WHERE id_producto = _id_producto$$
+UPDATE tbl_productos 
+SET nombre_producto = _nombre_producto, 
+    precio_detal = _precio_detal, 
+    precio_por_mayor = _precio_por_mayor, 
+    precio_unitario = _precio_unitario, 
+    Tbl_Categoria_idcategoria = _Tbl_Categoria_idcategoria, 
+    talla = _talla, 
+    tamano = _tamano, 
+    stock_minimo = _stock 
+WHERE id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_Proveedor` (IN `_nit` VARCHAR(50), IN `_empresa` VARCHAR(50), IN `_telefono` VARCHAR(50), IN `_id_persona` VARCHAR(50))  NO SQL
-UPDATE tbl_proveedor SET nit = _nit, empresa = _empresa,  telefono_empresa = _telefono WHERE Tbl_Persona_id_persona = _id_persona$$
+UPDATE tbl_proveedor 
+SET nit = _nit, empresa = _empresa,  telefono_empresa = _telefono 
+WHERE Tbl_Persona_id_persona = _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_Usuarios` (IN `_nombre_usuario` VARCHAR(50), IN `_id_rol` INT, IN `_id_usuario` VARCHAR(50))  NO SQL
-UPDATE tbl_usuarios SET nombre_usuario = _nombre_usuario, Tbl_rol_id_rol = _id_rol WHERE id_usuarios = _id_usuario$$
+UPDATE tbl_usuarios 
+SET nombre_usuario = _nombre_usuario, Tbl_rol_id_rol = _id_rol 
+WHERE id_usuarios = _id_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Modificar_Valor_Base` (IN `_valor_base` DOUBLE)  NO SQL
-UPDATE tbl_configuracion SET valor_base = _valor_base WHERE idTbl_Configuracion BETWEEN 1 AND 3$$
+UPDATE tbl_configuracion 
+SET valor_base = _valor_base 
+WHERE idTbl_Configuracion 
+BETWEEN 1 AND 3$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_NombreEmpleado` (IN `_id_persona` VARCHAR(50))  NO SQL
-SELECT CONCAT(nombres, ' ', apellidos) AS empleado FROM tbl_persona WHERE id_persona = _id_persona$$
+SELECT CONCAT(nombres, ' ', apellidos) AS empleado 
+FROM tbl_persona
+WHERE id_persona = _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Notificacion_Creditos` ()  NO SQL
-SELECT v.*, NOW() AS fecha_actual, p.*, tp.Tbl_nombre_tipo_persona
-FROM tbl_tipopersona tp JOIN tbl_persona p ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = p.id_persona
-WHERE DATE_SUB(fecha_limite_credito,INTERVAL 5 DAY) <= CURDATE() AND tipo_de_pago = 1 AND estado_credito = 1$$
+SELECT v.*, 
+       NOW() AS fecha_actual, 
+       p.*, tp.Tbl_nombre_tipo_persona
+FROM tbl_tipopersona tp 
+JOIN tbl_persona p ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona 
+JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = p.id_persona
+WHERE DATE_SUB(fecha_limite_credito,INTERVAL 5 DAY) <= CURDATE() 
+AND tipo_de_pago = 1 AND estado_credito = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Notificacion_Prestamos` ()  NO SQL
-SELECT *, NOW() AS fecha_actual FROM tbl_prestamos WHERE DATE_SUB(fecha_limite,INTERVAL 5 DAY) <= CURDATE() AND estado_prestamo IN(1,3)$$
+SELECT *, 
+       NOW() AS fecha_actual 
+       FROM tbl_prestamos 
+       WHERE DATE_SUB(fecha_limite,INTERVAL 5 DAY) <= CURDATE() 
+       AND estado_prestamo IN(1,3)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Notificacion_Stock_Minimo` ()  NO SQL
-SELECT * FROM tbl_productos WHERE cantidad <= stock_minimo$$
+SELECT * 
+FROM tbl_productos 
+WHERE cantidad <= stock_minimo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Paginas` (IN `_id_rol` INT, IN `_url` VARCHAR(50))  NO SQL
 SELECT p.url 
-FROM tbl_pagina_rol t JOIN tbl_paginas p ON p.codigo_paginas = t.Tbl_Paginas_codigo_paginas
-WHERE Tbl_rol_id_rol = _id_rol AND p.url = _url AND t.estado = 1$$
+FROM tbl_pagina_rol t 
+JOIN tbl_paginas p ON p.codigo_paginas = t.Tbl_Paginas_codigo_paginas
+WHERE Tbl_rol_id_rol = _id_rol 
+AND p.url = _url 
+AND t.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_DetallesCompra` (IN `_id_compra` INT)  NO SQL
 SELECT cp.id_detalle,
@@ -1134,13 +1381,20 @@ SELECT cp.id_detalle,
        c.valor_total,
        c.id_compras,
        CONCAT(pro.nombres, ' ', pro.apellidos) AS proveedor
-FROM tbl_compras_has_tbl_productos AS cp JOIn tbl_productos AS p ON p.id_producto = cp.Tbl_Productos_id_productos JOIN tbl_compras c ON c.id_compras = cp.Tbl_Compras_idcompras JOIN tbl_persona pro ON pro.id_persona = c.Tbl_Persona_id_persona_proveedor
-WHERE Tbl_Compras_idcompras = _id_compra GROUP BY pro.id_persona$$
+FROM tbl_compras_has_tbl_productos AS cp 
+JOIn tbl_productos AS p ON p.id_producto = cp.Tbl_Productos_id_productos 
+JOIN tbl_compras c ON c.id_compras = cp.Tbl_Compras_idcompras 
+JOIN tbl_persona pro ON pro.id_persona = c.Tbl_Persona_id_persona_proveedor
+WHERE Tbl_Compras_idcompras = _id_compra 
+GROUP BY pro.id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Abono` (IN `_id` VARCHAR(50))  NO SQL
 SELECT p.id_persona, 
        CONCAT(p.nombres, ' ', p.apellidos) AS cliente, 
-       (SELECT valor_abono FROM tbl_abono_ventas abv WHERE v.id_ventas = abv.Tbl_Ventas_idventas and abv.idabono = MAX(a.idabono)) as valor_abono,
+       (SELECT valor_abono 
+        FROM tbl_abono_ventas abv 
+        WHERE v.id_ventas = abv.Tbl_Ventas_idventas 
+        and abv.idabono = MAX(a.idabono)) as valor_abono,
        MAX(a.idabono) AS idabono,
        DATE_FORMAT(a.fechaAbono, '%Y/%m/%d') AS fechaAbono,
        a.saldo_abono, 
@@ -1151,7 +1405,11 @@ SELECT p.id_persona,
 FROM tbl_persona p 
 JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = p.id_persona 
 JOIN tbl_abono_ventas a ON a.Tbl_Ventas_idventas = v.id_ventas 
-WHERE p.id_persona = _id AND a.estado_abono = 1 AND v.estado_credito = 1 AND v.estado = 1 GROUP BY p.id_persona$$
+WHERE p.id_persona = _id 
+AND a.estado_abono = 1 
+AND v.estado_credito = 1 
+AND v.estado = 1 
+GROUP BY p.id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Abono_Prestamo` (IN `_id` VARCHAR(50))  NO SQL
 SELECT
@@ -1207,10 +1465,14 @@ SELECT
             v.subtotal_venta,
             v.tipo_de_pago,
             v.total_venta
-FROM tbl_persona per JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = per.id_persona JOIN tbl_productos_has_tbl_ventas dv ON dv.Tbl_Ventas_id_ventas = v.id_ventas JOIN tbl_productos p ON p.id_producto = dv.Tbl_Productos_id_productos WHERE dv.Tbl_Ventas_id_ventas = _id_venta GROUP BY per.id_persona$$
+FROM tbl_persona per 
+JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = per.id_persona JOIN tbl_productos_has_tbl_ventas dv ON dv.Tbl_Ventas_id_ventas = v.id_ventas 
+JOIN tbl_productos p ON p.id_producto = dv.Tbl_Productos_id_productos WHERE dv.Tbl_Ventas_id_ventas = _id_venta 
+GROUP BY per.id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_RegistrarAbonoPrestamo` (IN `valor` DOUBLE, IN `estado` INT, IN `Tbl_Prestamos_idprestamos` INT)  NO SQL
-INSERT INTO tbl_abono_prestamo VALUES(null, null, valor, estado, Tbl_Prestamos_idprestamos)$$
+INSERT INTO tbl_abono_prestamo 
+VALUES(null, null, valor, estado, Tbl_Prestamos_idprestamos)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_RegistrarDetallePagoConfiguracion` (IN `id_pago` INT, IN `idTbl_Configuracion` INT, IN `valor_total` INT)  NO SQL
 INSERT INTO tbl_pagoempleados_has_tbl_configuracion VALUES(id_pago,idTbl_Configuracion,valor_total)$$
@@ -1219,22 +1481,28 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_RegistrarDetallePagoConfiTemp` (
 INSERT INTO tbl_pagoempleados_has_tbl_configuracion VALUES(id_pago,idTbl_Configuracion,valorTotal)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_registrarPagoEmpleadoFijo` (IN `num_docu` VARCHAR(50), IN `valor_ventas` DOUBLE, IN `valor_comision` DOUBLE, IN `cantidad_dias` INT, IN `valor_prima` INT, IN `valor_cesantias` INT, IN `valor_vacaciones` INT, IN `estado` INT)  NO SQL
-INSERT INTO tbl_pagoempleados VALUES (null,null, num_docu, valor_ventas ,valor_comision, null,null,valor_prima, valor_cesantias, valor_vacaciones, estado)$$
+INSERT INTO tbl_pagoempleados 
+VALUES (null,null, num_docu, valor_ventas ,valor_comision, null,null,valor_prima, valor_cesantias, valor_vacaciones, estado)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_registrarPagoEmpleadoTemporal` (IN `num_docu` VARCHAR(50), IN `canti_dias` INT, IN `valor_dia` DOUBLE, IN `estado` INT)  NO SQL
-INSERT INTO tbl_pagoempleados VALUES (null,null, num_docu, null, null, canti_dias, valor_dia, null, null, null, estado)$$
+INSERT INTO tbl_pagoempleados 
+VALUES (null,null, num_docu, null, null, canti_dias, valor_dia, null, null, null, estado)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_RegistrarPrestamo` (IN `estado_prestamo` INT, IN `valor_prestamo` DOUBLE, IN `fecha_prestamo` DATE, IN `fecha_limite` DATE, IN `descripcion` VARCHAR(100), IN `Tbl_Persona_id_persona` VARCHAR(50))  NO SQL
-INSERT INTO tbl_prestamos VALUES (null,estado_prestamo, valor_prestamo, fecha_prestamo, fecha_limite, descripcion, Tbl_Persona_id_persona)$$
+INSERT INTO tbl_prestamos 
+VALUES (null,estado_prestamo, valor_prestamo, fecha_prestamo, fecha_limite, descripcion, Tbl_Persona_id_persona)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Registrar_Categoria` (IN `_nombre` VARCHAR(50))  NO SQL
-INSERT INTO tbl_categoria (nombre) VALUES(_nombre)$$
+INSERT INTO tbl_categoria (nombre) 
+VALUES(_nombre)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Registrar_producto` (IN `_nombre_producto` VARCHAR(50), IN `_precio_detal` DOUBLE, IN `_precio_por_mayor` DOUBLE, IN `_precio_unitario` DOUBLE, IN `_Tbl_Categoria_idcategoria` INT, IN `_talla` VARCHAR(20), IN `_tamano` VARCHAR(100), IN `_stock` INT)  NO SQL
-INSERT INTO tbl_productos(nombre_producto,precio_detal,precio_por_mayor,precio_unitario,Tbl_Categoria_idcategoria,talla,tamano, stock_minimo) VALUES (_nombre_producto,_precio_detal,_precio_por_mayor,_precio_unitario,_Tbl_Categoria_idcategoria,_talla,_tamano, _stock)$$
+INSERT INTO tbl_productos(nombre_producto,precio_detal,precio_por_mayor,precio_unitario,Tbl_Categoria_idcategoria,talla,tamano, stock_minimo) 
+VALUES (_nombre_producto,_precio_detal,_precio_por_mayor,_precio_unitario,_Tbl_Categoria_idcategoria,_talla,_tamano, _stock)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Registrar_Proveedor` (IN `_nit` VARCHAR(50), IN `_empresa` VARCHAR(50), IN `_telefono` VARCHAR(50), IN `_id_persona` VARCHAR(50))  NO SQL
-INSERT INTO tbl_proveedor(nit, empresa, telefono_empresa, Tbl_Persona_id_persona) VALUES(_nit, _empresa, _telefono, _id_persona)$$
+INSERT INTO tbl_proveedor(nit, empresa, telefono_empresa, Tbl_Persona_id_persona) 
+VALUES(_nit, _empresa, _telefono, _id_persona)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Reporte_Creditos` ()  NO SQL
 SELECT DISTINCT
@@ -1244,14 +1512,15 @@ SELECT DISTINCT
 		    v.tipo_de_pago,
             v.total_venta,
             v.fecha_limite_credito
-          FROM tbl_persona p 
+           FROM tbl_persona p 
           JOIN tbl_tipopersona tp 
           ON tp.idTbl_tipo_persona = Tbl_TipoPersona_idTbl_TipoPersona
 		  JOIN tbl_ventas v 
           ON v.Tbl_persona_idpersona_cliente = p.id_persona 
           JOIN tbl_abono_ventas av
 		  WHERE p.Tbl_TipoPersona_idTbl_TipoPersona IN(5, 6) 
-          AND V.tipo_de_pago = 1 AND v.estado = 1 AND av.estado_abono           = 1 AND v.estado_credito = 1 GROUP BY p.id_persona$$
+          AND V.tipo_de_pago = 1 AND v.estado = 1 AND av.estado_abono           = 1 AND v.estado_credito = 1 
+          GROUP BY p.id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Reporte_Ganancias` (IN `_fecha_inicial` DATE, IN `_fecha_final` DATE)  NO SQL
 SELECT ((SUM(precio_venta * cantidad)) - (SUM(cantidad * precio_unitario_actual)) - SUM(v.descuento)) AS ganancias 
@@ -1263,141 +1532,230 @@ AND DATE_FORMAT(_fecha_final, '%Y-%m-%d')
 AND v.estado = 1$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_sumarValorAbonoPrestamo` (IN `_id_Prestamo` INT)  NO SQL
-SELECT sum(valor) as Total from tbl_abono_prestamo WHERE Tbl_Prestamos_idprestamos = _id_Prestamo$$
+SELECT sum(valor) as Total 
+from tbl_abono_prestamo 
+WHERE Tbl_Prestamos_idprestamos = _id_Prestamo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Total_Compras_Fecha` (IN `_fecha_inicial` DATE, IN `_fecha_final` DATE)  NO SQL
 SELECT SUM(valor_total) AS total, fecha_compra 
 FROM tbl_compras 
-WHERE DATE_FORMAT(fecha_compra, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND estado = 1 ORDER BY fecha_compra DESC$$
+WHERE DATE_FORMAT(fecha_compra, '%Y-%m-%d') 
+BETWEEN _fecha_inicial and _fecha_final AND estado = 1 
+ORDER BY fecha_compra DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Total_Ventas_Por_Fecha` (IN `_fecha_inicial` DATE, IN `_fecha_final` DATE)  NO SQL
 SELECT (SUM(total_venta) - descuento) AS total, fecha_venta 
 FROM tbl_ventas 
-WHERE DATE_FORMAT(fecha_venta, '%Y-%m-%d') BETWEEN _fecha_inicial and _fecha_final AND estado = 1 ORDER BY fecha_venta DESC$$
+WHERE DATE_FORMAT(fecha_venta, '%Y-%m-%d') 
+BETWEEN _fecha_inicial and _fecha_final AND estado = 1 
+ORDER BY fecha_venta DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_traerAbonosPorPrestamos` (IN `_id_prestamos` INT)  NO SQL
-SELECT abono.estado_abono, SUM(abono.valor) as TotalAbono FROM tbl_abono_prestamo abono WHERE abono.Tbl_Prestamos_idprestamos = _id_prestamos AND abono.estado_abono = 0$$
+SELECT abono.estado_abono, SUM(abono.valor) as TotalAbono 
+FROM tbl_abono_prestamo abono 
+WHERE abono.Tbl_Prestamos_idprestamos = _id_prestamos 
+AND abono.estado_abono = 0$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_traerinfoCreditos` (IN `_id_venta` INT)  NO SQL
-SELECT fecha_limite_credito, id_ventas FROM tbl_ventas WHERE id_ventas = _id_venta$$
+SELECT fecha_limite_credito, id_ventas 
+FROM tbl_ventas 
+WHERE id_ventas = _id_venta$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_traerinfoprestamo` (IN `id_prestamos` INT)  NO SQL
-SELECT pre.fecha_limite, pre.valor_prestamo, pre.id_prestamos from tbl_prestamos pre WHERE pre.id_prestamos = id_prestamos$$
+SELECT pre.fecha_limite, pre.valor_prestamo, pre.id_prestamos 
+from tbl_prestamos pre
+WHERE pre.id_prestamos = id_prestamos$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Traer_idcategoria` (IN `_id_categoria` INT)  NO SQL
-SELECT id_categoria, nombre FROM tbl_categoria WHERE id_categoria = _id_categoria$$
+SELECT id_categoria, nombre 
+FROM tbl_categoria 
+WHERE id_categoria = _id_categoria$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Traer_idproducto` (IN `_id_producto` INT)  NO SQL
-SELECT id_producto, nombre_producto, precio_detal, precio_por_mayor, precio_unitario, Tbl_Categoria_idcategoria, talla, tamano, stock_minimo FROM tbl_productos WHERE id_producto = _id_producto$$
+SELECT id_producto, nombre_producto, precio_detal, precio_por_mayor, precio_unitario, Tbl_Categoria_idcategoria, talla, tamano, stock_minimo FROM tbl_productos 
+WHERE id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_UltimaBaja` ()  NO SQL
-SELECT MAX(id_bajas) ultimo_id FROM tbl_bajas$$
+SELECT MAX(id_bajas) ultimo_id 
+FROM tbl_bajas$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_UltimaCompra` ()  NO SQL
-SELECT MAX(id_compras) AS ultima FROM tbl_compras$$
+SELECT MAX(id_compras) AS ultima 
+FROM tbl_compras$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_UltimaVenta` ()  NO SQL
-SELECT MAX(id_ventas) AS ultima FROM tbl_ventas$$
+SELECT MAX(id_ventas) AS ultima 
+FROM tbl_ventas$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Ultima_Persona` ()  NO SQL
-SELECT MAX(id_persona) AS ultimo FROM tbl_persona$$
+SELECT MAX(id_persona) AS ultimo 
+FROM tbl_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Ultimo_usuario` ()  NO SQL
-SELECT MAX(id_usuarios) as ultimo FROM tbl_usuarios$$
+SELECT MAX(id_usuarios) as ultimo 
+FROM tbl_usuarios$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Usuario_Por_Codigo` (IN `_id_usuario` VARCHAR(50))  NO SQL
-SELECT nombre_usuario, clave, estado, Tbl_rol_id_rol FROM tbl_usuarios WHERE id_usuarios = _id_usuario$$
+SELECT nombre_usuario, clave, estado, Tbl_rol_id_rol
+FROM tbl_usuarios 
+WHERE id_usuarios = _id_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ValAbonoAnularPrestamo` (IN `_id_prestamo` INT)  NO SQL
-SELECT abono.valor from tbl_abono_prestamo abono WHERE abono.Tbl_Prestamos_idprestamos = _id_prestamo$$
+SELECT abono.valor 
+from tbl_abono_prestamo abono 
+WHERE abono.Tbl_Prestamos_idprestamos = _id_prestamo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Cantidad_Producto` (IN `_id_producto` INT)  NO SQL
-SELECT cantidad FROM tbl_productos WHERE id_producto = _id_producto$$
+SELECT cantidad 
+FROM tbl_productos 
+WHERE id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Codigo` (IN `_codigo` INT)  NO SQL
-SELECT id_producto FROM tbl_productos WHERE id_producto = _codigo$$
+SELECT id_producto 
+FROM tbl_productos 
+WHERE id_producto = _codigo$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Email` (IN `_correo` VARCHAR(50), IN `_id` VARCHAR(50))  NO SQL
-SELECT count(id_persona) total FROM tbl_persona WHERE email = _correo AND id_persona <> _id$$
+SELECT count(id_persona) total
+FROM tbl_persona 
+WHERE email = _correo AND id_persona <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_validar_email2` (IN `_correo` VARCHAR(50))  NO SQL
-SELECT email FROM tbl_persona WHERE email = _correo AND email <> ''$$
+SELECT email 
+FROM tbl_persona 
+WHERE email = _correo AND email <> ''$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Fecha` (IN `_fecha` DATE)  NO SQL
-SELECT fecha_compra FROM tbl_compras WHERE DATE_FORMAT(fecha_compra, '%Y%m%d') = _fecha$$
+SELECT fecha_compra 
+FROM tbl_compras 
+WHERE DATE_FORMAT(fecha_compra, '%Y%m%d') = _fecha$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Fecha_Baja` (IN `_fecha` DATE)  NO SQL
-SELECT fecha_salida FROM tbl_bajas WHERE DATE_FORMAT(fecha_salida, '%Y%m%d') = _fecha$$
+SELECT fecha_salida 
+FROM tbl_bajas 
+WHERE DATE_FORMAT(fecha_salida, '%Y%m%d') = _fecha$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Fecha_Ganancia` (IN `_fecha` DATE)  NO SQL
-SELECT DATE_FORMAT(fecha_venta, '%Y-%m-%d') AS fecha_venta FROM tbl_ventas WHERE DATE_FORMAT(fecha_venta, '%Y-%m-%d') = _fecha$$
+SELECT DATE_FORMAT(fecha_venta, '%Y-%m-%d') AS fecha_venta 
+FROM tbl_ventas 
+WHERE DATE_FORMAT(fecha_venta, '%Y-%m-%d') = _fecha$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Fecha_Venta` (IN `_fecha` DATE)  NO SQL
-SELECT fecha_venta FROM tbl_ventas WHERE DATE_FORMAT(fecha_venta, '%Y%m%d') = _fecha$$
+SELECT fecha_venta 
+FROM tbl_ventas 
+WHERE DATE_FORMAT(fecha_venta, '%Y%m%d') = _fecha$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Id_Persona` (IN `_Id_Persona` VARCHAR(50))  NO SQL
-SELECT id_persona FROM tbl_persona WHERE id_persona = _Id_Persona$$
+SELECT id_persona 
+FROM tbl_persona 
+WHERE id_persona = _Id_Persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Email` (IN `_id_persona` VARCHAR(50), IN `_correo` VARCHAR(50))  NO SQL
-SELECT count(id_persona) total FROM tbl_persona WHERE email = _correo AND id_persona <> _id_persona$$
+SELECT count(id_persona) total 
+FROM tbl_persona
+WHERE email = _correo AND id_persona <> _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Nombre_Categoria` (IN `_id` INT, IN `_nombre` VARCHAR(50))  NO SQL
 SELECT LOWER(nombre) AS nombre
-FROM tbl_categoria WHERE nombre = _nombre AND id_categoria = _id$$
+FROM tbl_categoria 
+WHERE nombre = _nombre AND id_categoria = _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Nombre_Producto` (IN `_id_producto` INT, IN `_nombre` VARCHAR(50))  NO SQL
 SELECT LOWER(nombre_producto) AS nombre
-FROM tbl_productos WHERE nombre_producto = _nombre AND id_producto = _id_producto$$
+FROM tbl_productos 
+WHERE nombre_producto = _nombre AND id_producto = _id_producto$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Modificacion_Usuario` (IN `_id_persona` VARCHAR(50), IN `_nombre_usuario` VARCHAR(50))  NO SQL
 SELECT nombre_usuario
-FROM tbl_usuarios WHERE nombre_usuario = _nombre_usuario AND id_usuarios = _id_persona$$
+FROM tbl_usuarios 
+WHERE nombre_usuario = _nombre_usuario AND id_usuarios = _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Mod_Email` (IN `_id` VARCHAR(50))  NO SQL
 SELECT email
-FROM tbl_persona WHERE id_persona <> _id$$
+FROM tbl_persona 
+WHERE id_persona <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombres_Categorias` (IN `_id` INT)  NO SQL
 SELECT LOWER(nombre) AS nombre
-FROM tbl_categoria WHERE id_categoria <> _id$$
+FROM tbl_categoria 
+WHERE id_categoria <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Categoria` (IN `_categoria` VARCHAR(50))  NO SQL
-SELECT id_categoria, nombre FROM tbl_categoria WHERE nombre = _categoria$$
+SELECT id_categoria, nombre 
+FROM tbl_categoria 
+WHERE nombre = _categoria$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Categoria2` (IN `_nombre` VARCHAR(50))  NO SQL
-SELECT count(nombre) total FROM tbl_categoria WHERE nombre = _nombre$$
+SELECT count(nombre) total 
+FROM tbl_categoria 
+WHERE nombre = _nombre AND nombre <> ''$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Producto` (IN `_nombre` VARCHAR(50))  NO SQL
-SELECT nombre_producto FROM tbl_productos WHERE nombre_producto = _nombre$$
+SELECT nombre_producto 
+FROM tbl_productos 
+WHERE nombre_producto = _nombre$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Producto2` (IN `_nombre` VARCHAR(50), IN `_talla` VARCHAR(30), IN `_categoria` INT)  NO SQL
+SELECT
+	nombre_producto,
+    talla
+FROM
+	tbl_productos
+WHERE
+	(
+		(
+			nombre_producto = _nombre
+			AND talla = _talla
+		)
+		AND Tbl_Categoria_idcategoria  = _categoria
+	)$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Productos` (IN `_id` VARCHAR(50))  NO SQL
 SELECT LOWER(nombre_producto) AS nombre
-FROM tbl_productos WHERE id_producto <> _id$$
+FROM tbl_productos 
+WHERE id_producto <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_nombre_Usu` (IN `_Nombre` VARCHAR(50), IN `_id` VARCHAR(50))  NO SQL
-SELECT count(nombre_usuario) total FROM tbl_usuarios WHERE nombre_usuario = _Nombre AND id_usuarios <> _id$$
+SELECT count(nombre_usuario) total 
+FROM tbl_usuarios 
+WHERE nombre_usuario = _Nombre 
+AND id_usuarios <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Nombre_Usuario` (IN `_id` VARCHAR(50))  NO SQL
 SELECT nombre_usuario
 FROM tbl_usuarios WHERE id_usuarios <> _id$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Prestamo` (IN `_id_persona` VARCHAR(50))  NO SQL
-SELECT Tbl_Persona_id_persona, estado_prestamo, valor_prestamo FROM tbl_prestamos WHERE estado_prestamo = 1 AND Tbl_Persona_id_persona = _id_persona$$
+SELECT Tbl_Persona_id_persona, estado_prestamo, valor_prestamo 
+FROM tbl_prestamos 
+WHERE estado_prestamo = 1 AND Tbl_Persona_id_persona = _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Tipo_Empleado` (IN `_id_persona` VARCHAR(50))  NO SQL
-SELECT id_persona FROM tbl_persona WHERE Tbl_TipoPersona_idTbl_TipoPersona = 1 AND id_persona = _id_persona$$
+SELECT id_persona 
+FROM tbl_persona 
+WHERE Tbl_TipoPersona_idTbl_TipoPersona = 1 
+AND id_persona = _id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Usuario` (IN `_nombre_usuario` VARCHAR(50))  NO SQL
-SELECT nombre_usuario FROM tbl_usuarios WHERE nombre_usuario = _nombre_usuario$$
+SELECT nombre_usuario 
+FROM tbl_usuarios 
+WHERE nombre_usuario = _nombre_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Validar_Usuario2` (IN `_nombre_usuario` VARCHAR(50))  NO SQL
-SELECT nombre_usuario FROM tbl_usuarios WHERE nombre_usuario = _nombre_usuario$$
+SELECT nombre_usuario 
+FROM tbl_usuarios 
+WHERE nombre_usuario = _nombre_usuario$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_ValiPrestamo` (IN `id_persona` VARCHAR(50))  NO SQL
-SELECT COUNT(pre.estado_prestamo) from tbl_prestamos pre WHERE pre.estado_prestamo = 1 AND pre.Tbl_Persona_id_persona = id_persona$$
+SELECT COUNT(pre.estado_prestamo) 
+from tbl_prestamos pre 
+WHERE pre.estado_prestamo = 1 
+AND pre.Tbl_Persona_id_persona = id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_valorPrestamoliquidacion` (IN `id_persona` VARCHAR(50))  NO SQL
-SELECT pre.id_prestamos, pre.valor_prestamo from tbl_prestamos pre WHERE pre.estado_prestamo = 1 AND pre.Tbl_Persona_id_persona = id_persona$$
+SELECT pre.id_prestamos, pre.valor_prestamo 
+from tbl_prestamos pre 
+WHERE pre.estado_prestamo = 1 AND pre.Tbl_Persona_id_persona = id_persona$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Ventas_Dia` ()  NO SQL
 SELECT
@@ -1487,7 +1845,6 @@ INSERT INTO `tbl_abono_ventas` (`idabono`, `fechaAbono`, `valor_abono`, `Tbl_Ven
 CREATE TABLE `tbl_bajas` (
   `id_bajas` int(11) NOT NULL,
   `fecha_salida` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `tipo_baja` varchar(15) NOT NULL,
   `id_persona_empleado` varchar(50) NOT NULL,
   `estado` int(11) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -1496,16 +1853,8 @@ CREATE TABLE `tbl_bajas` (
 -- Volcado de datos para la tabla `tbl_bajas`
 --
 
-INSERT INTO `tbl_bajas` (`id_bajas`, `fecha_salida`, `tipo_baja`, `id_persona_empleado`, `estado`) VALUES
-(1, '2016-11-07 13:53:34', 'Robo', '1234567890', 1),
-(2, '2016-11-09 01:03:17', '', '1234567890', 1),
-(3, '2016-11-09 01:06:44', '', '1234567890', 1),
-(4, '2016-11-09 01:12:05', '', '1234567890', 1),
-(5, '2016-11-09 02:44:47', 'Robo', '1234567890', 1),
-(6, '2016-11-09 02:46:12', 'Averia', '1234567890', 1),
-(7, '2016-11-09 02:47:44', 'Robo', '1234567890', 1),
-(8, '2016-11-09 02:50:18', 'Robo', '1234567890', 1),
-(9, '2016-11-09 13:25:05', 'Robo', '1234567890', 1);
+INSERT INTO `tbl_bajas` (`id_bajas`, `fecha_salida`, `id_persona_empleado`, `estado`) VALUES
+(1, '2016-11-18 14:57:13', '234589234', 1);
 
 -- --------------------------------------------------------
 
@@ -1526,7 +1875,7 @@ INSERT INTO `tbl_categoria` (`id_categoria`, `nombre`) VALUES
 (1, 'Ropa'),
 (2, 'Confeccion'),
 (3, 'Fumadores'),
-(4, 'Aromas');
+(17, 'Aromas');
 
 -- --------------------------------------------------------
 
@@ -1552,7 +1901,9 @@ INSERT INTO `tbl_compras` (`id_compras`, `fecha_compra`, `valor_total`, `estado`
 (2, '2016-11-09 02:05:52', 12500, 0, '2434ert454', '1234567890'),
 (3, '2016-11-10 11:49:17', 112000, 1, '3435465656', '1234567890'),
 (4, '2016-11-10 12:03:14', 25000, 0, '3435465656', '1234567890'),
-(5, '2016-11-10 12:04:27', 22000, 1, '2434ert454', '1234567890');
+(5, '2016-11-10 12:04:27', 22000, 1, '2434ert454', '1234567890'),
+(6, '2016-11-17 00:32:19', 15000, 1, '3435465656', '1234567890'),
+(7, '2016-11-20 04:18:01', 10000, 1, '3435465656', '1234567890');
 
 -- --------------------------------------------------------
 
@@ -1581,7 +1932,9 @@ INSERT INTO `tbl_compras_has_tbl_productos` (`Tbl_Compras_idcompras`, `id_detall
 (3, 6, 1, 2, 5000),
 (4, 7, 1, 5, 5000),
 (4, 8, 10, 1, 2000),
-(5, 9, 11, 1, 2000);
+(5, 9, 11, 1, 2000),
+(6, 10, 3, 5, 5000),
+(7, 11, 2, 5, 5000);
 
 -- --------------------------------------------------------
 
@@ -1648,41 +2001,33 @@ CREATE TABLE `tbl_menu` (
 
 INSERT INTO `tbl_menu` (`id_menu`, `url_menu`, `texto_menu`, `icono_menu`, `padre_id`, `orden`) VALUES
 (1, 'otro/index', 'MENÚ PRINCIPAL', 'th-list', NULL, 1),
-(2, '#', 'Administrar Personas', 'users', NULL, 2),
-(3, 'Personas/listarTipoPers', 'Registrar Personas', '', 2, 2),
+(2, '#', 'Personas', 'users', NULL, 2),
+(3, 'Personas/listarTipoPers', 'Registrar Personas', '', 2, 1),
 (4, 'Personas/listarPersonasEmpleados', 'Listar Usuarios/Empleados', NULL, 2, 2),
-(5, '#', 'Productos', 'cubes', NULL, 3),
-(6, 'producto/registrarProductos', 'Registrar Productos', NULL, 5, 1),
-(7, 'producto/listarProductos', 'Listar Productos', NULL, 5, 3),
-(8, 'producto/RegistrarBajas', 'Registrar Bajas', NULL, 5, 2),
-(9, '#', 'Categorías', 'database', NULL, 4),
-(10, 'producto/registrarCategoria', 'Registrar Categoría', NULL, 9, 1),
-(11, 'producto/listarCategorias', 'Listar Categorías', NULL, 9, 2),
-(12, '#', 'Gestión de Entradas', 'shopping-cart', NULL, 5),
-(13, 'Compras/registrarCompra', 'Registrar Entradas', NULL, 12, 1),
-(14, 'Compras/listarCompras', 'Listar Entradas', NULL, 12, 2),
-(15, '#', 'Ventas', 'usd', NULL, 6),
-(16, 'Ventas/index', 'Registrar Ventas', NULL, 15, 1),
-(17, 'Ventas/listarVentas', 'Listar Ventas', NULL, 15, 2),
-(18, '#', 'Abonos Ventas', 'credit-card', NULL, 7),
-(19, 'Ventas/registrarAbonos', 'Registrar Abonos', NULL, 18, 1),
-(20, 'Ventas/listarVentasCredito', 'Listar Créditos-Abonos', NULL, 15, 3),
-(21, '#', 'Pagos Empleados', 'money', NULL, 8),
-(22, 'Empleados/registrarPagos', 'Registrar Pagos', NULL, 21, 1),
-(23, 'Empleados/listarPagos', 'Listar Pagos', NULL, 21, 2),
-(26, 'Empleados/listarLiquidacion', 'Listar Liquidaciones', NULL, 24, 2),
-(27, '#', 'Préstamos Empleados', 'credit-card', NULL, 10),
-(28, 'Empleados/registrarPrestamo', 'Registrar Préstamos', NULL, 27, 1),
-(32, 'Empleados/ListarPrest', 'Listar Préstamos', NULL, 27, 2),
-(34, 'Personas/listarProveedores', 'Listar Proveedores', NULL, 2, 3),
-(35, 'producto/listarStock', 'Listar Stock Mínimo', NULL, 5, 5),
-(36, 'producto/listarBajas', 'Listar Bajas', NULL, 5, 4),
-(37, 'Personas/listarPersonasClientes', 'Listar Clientes', NULL, 2, 4),
-(38, 'producto/pdfinformeproducto', 'Reporte Productos', NULL, 33, 1),
-(39, 'Compras/informeproducto', 'Reporte Entradas', NULL, 12, 3),
-(40, 'Ventas/informeVentas', 'Reporte Ventas', NULL, 15, 4),
-(41, 'producto/informeBajas', 'Reporte Bajas', NULL, 5, 4),
-(42, 'Ventas/informeGanancias', 'Indicador Promedio Ganancías', NULL, 15, 5);
+(5, 'Personas/listarProveedores', 'Listar Proveedores', NULL, 2, 3),
+(6, 'Personas/listarPersonasClientes', 'Listar Clientes', NULL, 2, 4),
+(7, '#', 'Categorías', 'database', NULL, 3),
+(8, 'producto/listarCategorias', 'Gestionar Categorías', NULL, 7, 1),
+(9, '#', 'Productos', 'cubes', NULL, 4),
+(10, 'producto/registrarProductos', 'Registrar Productos', NULL, 9, 1),
+(11, 'producto/listarProductos', 'Listar Productos', NULL, 9, 2),
+(12, '#', 'Gestionar Existencias', 'check-square-o', NULL, 5),
+(13, 'producto/RegistrarBajas', 'Registrar Bajas', '', 12, 1),
+(14, 'producto/listarBajas', 'Listar Bajas', NULL, 12, 2),
+(15, 'producto/listarStock', 'Listar Productos en Stock Mínimo', NULL, 12, 3),
+(16, '#', 'Entradas', 'shopping-cart', NULL, 6),
+(17, 'Compras/registrarCompra', 'Registrar Entradas', NULL, 16, 1),
+(18, 'Compras/listarCompras', 'Listar Entradas', NULL, 16, 2),
+(19, '#', 'Ventas', 'usd', NULL, 7),
+(20, 'Ventas/index', 'Registrar Ventas', NULL, 19, 1),
+(21, 'Ventas/listarVentas', 'Listar Ventas', NULL, 19, 2),
+(22, 'Ventas/listarVentasCredito', 'Listar Créditos-Abonos', NULL, 19, 3),
+(23, '#', 'Préstamos a Empleados', 'credit-card', NULL, 8),
+(24, 'Empleados/registrarPrestamo', 'Registrar Préstamos', NULL, 23, 1),
+(25, 'Empleados/ListarPrest', 'Listar Préstamos', NULL, 23, 2),
+(26, '#', 'Pagos a Empleados', 'money', NULL, 9),
+(27, 'Empleados/registrarPagos', 'Registrar Pagos', NULL, 26, 1),
+(28, 'Empleados/listarPagos', 'Listar Pagos', NULL, 26, 2);
 
 -- --------------------------------------------------------
 
@@ -1812,7 +2157,8 @@ INSERT INTO `tbl_paginas` (`codigo_paginas`, `nombre`, `url`, `estado`) VALUES
 (108, 'otro/index2', 'otro/index2', 1),
 (109, 'Compras/registrarProducto', 'Compras/registrarProducto', 1),
 (110, 'producto/obtenerProductos2', 'producto/obtenerProductos2', 1),
-(111, 'ventas/pdfdetalles', 'Ventas/generarpdfDetallesVentas2', 1);
+(111, 'ventas/pdfdetalles', 'Ventas/generarpdfDetallesVentas2', 1),
+(112, 'producto/validacionNombre', 'producto/validacionNombre2', 1);
 
 -- --------------------------------------------------------
 
@@ -2044,7 +2390,8 @@ INSERT INTO `tbl_pagina_rol` (`codigo_paginas`, `Tbl_rol_id_rol`, `Tbl_Paginas_c
 (220, 2, 108, 1),
 (221, 1, 108, 1),
 (222, 3, 110, 1),
-(223, 3, 111, 1);
+(223, 3, 111, 1),
+(224, 3, 112, 1);
 
 -- --------------------------------------------------------
 
@@ -2138,6 +2485,7 @@ INSERT INTO `tbl_persona` (`id_persona`, `telefono`, `nombres`, `email`, `direcc
 ('3435465656', '2348912', 'Jonhatan', 'jonhatan@yahoo.es', 'San javier', 'ramirez', 1, '', 'Cedula', 4, '3002348923', NULL, NULL),
 ('43567567', '2343434', 'Viviana', '', 'Bello', 'Perez', 1, 'Femenino', 'Cedula', 4, '3019099887', NULL, NULL),
 ('4567893343', '3459012', 'Eduard', 'eduard@gmail.com', 'Prado', 'Vargas', 1, 'Masculino', 'Cedula', 5, '3002345678', NULL, NULL),
+('553253232222222', '2333333', 'Hector', 'hector@gmail.com', '', 'Maya', 1, 'Masculino', 'Cedula', 6, '3145678907', NULL, NULL),
 ('er454rtt65', '2390123', 'Diego', 'diego@hotmail.com', 'Aranjuez', 'Gómez', 1, 'Masculino', 'Cédula_Extranjera', 6, '3007892378', NULL, NULL);
 
 -- --------------------------------------------------------
@@ -2189,12 +2537,11 @@ CREATE TABLE `tbl_productos` (
 --
 
 INSERT INTO `tbl_productos` (`id_producto`, `nombre_producto`, `estado`, `precio_detal`, `precio_por_mayor`, `precio_unitario`, `Tbl_Categoria_idcategoria`, `talla`, `tamano`, `stock_minimo`, `cantidad`) VALUES
-(1, 'Camisa', 1, 3600, 3400, 2200, 1, 'M', '', 5, 15),
+(1, 'Camisa', 1, 3600, 3400, 2200, 1, 'M', '', 5, 3),
 (2, 'Gorro', 1, 6000, 5400, 5000, 2, '', 'mediano', 5, 1),
-(3, 'Mochila', 1, 3500, 3200, 3000, 2, '', 'pequeña', 5, 0),
-(4, 'Pipa', 1, 3000, 2600, 2500, 3, '', 'mediano', 10, 38),
-(5, 'Bufanda', 1, 6000, 5500, 5000, 3, '', 'largo', 5, 1),
-(6, 'Camisilla', 0, 7000, 5500, 3500, 1, 'XL', '', 4, 0);
+(3, 'Mochila', 0, 3550, 3250, 3050, 2, '', 'pequeña', 5, 0),
+(4, 'Pipa', 1, 3000, 2600, 2000, 3, '', 'mediano', 10, 37),
+(5, 'Bufanda', 1, 6000, 5500, 5000, 3, '', 'largo', 5, 3);
 
 -- --------------------------------------------------------
 
@@ -2205,20 +2552,16 @@ INSERT INTO `tbl_productos` (`id_producto`, `nombre_producto`, `estado`, `precio
 CREATE TABLE `tbl_productos_has_tbl_bajas` (
   `Tbl_Bajas_idbajas` int(11) NOT NULL,
   `Tbl_Productos_id_productos` int(11) NOT NULL,
-  `Cantidad` int(11) UNSIGNED NOT NULL
+  `Cantidad` int(11) UNSIGNED NOT NULL,
+  `tipo_baja` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Volcado de datos para la tabla `tbl_productos_has_tbl_bajas`
 --
 
-INSERT INTO `tbl_productos_has_tbl_bajas` (`Tbl_Bajas_idbajas`, `Tbl_Productos_id_productos`, `Cantidad`) VALUES
-(1, 2, 1),
-(5, 1, 1),
-(6, 1, 2),
-(7, 1, 1),
-(8, 1, 1),
-(9, 1, 1);
+INSERT INTO `tbl_productos_has_tbl_bajas` (`Tbl_Bajas_idbajas`, `Tbl_Productos_id_productos`, `Cantidad`, `tipo_baja`) VALUES
+(1, 4, 1, 'Hurto');
 
 -- --------------------------------------------------------
 
@@ -2270,7 +2613,10 @@ INSERT INTO `tbl_productos_has_tbl_ventas` (`Tbl_Ventas_id_ventas`, `cantidad`, 
 (26, 1, 4, 28, 2600, 2500),
 (27, 1, 1, 29, 3300, 2000),
 (27, 1, 4, 30, 2600, 2500),
-(28, 42, 1, 31, 3300, 2000);
+(28, 42, 1, 31, 3300, 2000),
+(29, 1, 1, 32, 3600, 2200),
+(30, 1, 1, 33, 3600, 2200),
+(31, 2, 1, 34, 3400, 2200);
 
 -- --------------------------------------------------------
 
@@ -2330,73 +2676,66 @@ CREATE TABLE `tbl_rol_menu` (
 --
 
 INSERT INTO `tbl_rol_menu` (`idrol_menu`, `id_rol`, `id_menu`) VALUES
-(1, 1, 1),
-(2, 1, 2),
-(3, 1, 3),
-(5, 1, 5),
-(6, 1, 6),
-(7, 1, 7),
-(9, 1, 8),
-(13, 1, 12),
-(14, 1, 13),
-(15, 1, 14),
-(16, 1, 15),
-(18, 1, 16),
-(19, 1, 17),
-(22, 1, 20),
-(23, 3, 21),
-(24, 3, 22),
-(25, 3, 23),
-(29, 3, 27),
-(30, 3, 28),
-(34, 3, 32),
-(37, 2, 1),
-(39, 2, 5),
-(40, 2, 6),
-(41, 2, 7),
-(47, 2, 15),
-(48, 2, 16),
-(49, 2, 17),
-(52, 2, 20),
-(56, 1, 34),
-(57, 2, 2),
-(58, 2, 3),
-(60, 1, 35),
-(61, 1, 36),
-(62, 1, 37),
-(63, 2, 37),
-(64, 1, 38),
-(65, 1, 39),
-(66, 1, 40),
-(67, 3, 1),
-(68, 3, 2),
-(69, 3, 3),
-(70, 3, 4),
-(71, 3, 5),
-(72, 3, 6),
-(73, 3, 7),
-(74, 3, 8),
-(75, 3, 9),
-(76, 3, 10),
-(77, 3, 11),
-(78, 3, 12),
-(79, 3, 13),
-(80, 3, 14),
-(81, 3, 15),
-(82, 3, 16),
-(83, 3, 17),
-(84, 3, 20),
-(85, 3, 34),
-(86, 3, 35),
-(87, 3, 36),
-(88, 3, 37),
-(89, 3, 38),
-(90, 3, 39),
-(91, 3, 40),
-(92, 2, 35),
-(93, 3, 41),
-(94, 1, 41),
-(96, 3, 42);
+(1, 3, 1),
+(2, 3, 2),
+(3, 3, 3),
+(4, 3, 4),
+(5, 3, 5),
+(6, 3, 6),
+(7, 3, 7),
+(8, 3, 8),
+(9, 3, 9),
+(10, 3, 10),
+(11, 3, 11),
+(12, 3, 12),
+(13, 3, 13),
+(14, 3, 14),
+(15, 3, 15),
+(16, 3, 16),
+(17, 3, 17),
+(18, 3, 18),
+(19, 3, 19),
+(20, 3, 20),
+(21, 3, 21),
+(22, 3, 22),
+(23, 3, 23),
+(24, 3, 24),
+(25, 3, 25),
+(26, 3, 26),
+(27, 3, 27),
+(28, 3, 28),
+(29, 1, 1),
+(30, 1, 2),
+(31, 1, 3),
+(32, 1, 5),
+(33, 1, 6),
+(34, 1, 9),
+(35, 1, 10),
+(36, 1, 11),
+(37, 1, 12),
+(38, 1, 13),
+(39, 1, 14),
+(40, 1, 15),
+(41, 1, 16),
+(42, 1, 17),
+(43, 1, 18),
+(44, 1, 19),
+(45, 1, 20),
+(46, 1, 21),
+(47, 1, 22),
+(48, 2, 1),
+(49, 2, 2),
+(50, 2, 3),
+(51, 2, 6),
+(52, 2, 9),
+(53, 2, 10),
+(54, 2, 11),
+(55, 2, 12),
+(56, 2, 15),
+(57, 2, 19),
+(58, 2, 20),
+(59, 2, 21),
+(60, 2, 22);
 
 -- --------------------------------------------------------
 
@@ -2442,7 +2781,7 @@ CREATE TABLE `tbl_usuarios` (
 INSERT INTO `tbl_usuarios` (`id_usuarios`, `clave`, `estado`, `nombre_usuario`, `Tbl_rol_id_rol`) VALUES
 ('1128453257', 'M/NeK22d8n3Vupc4khM34fZFx5UflGIW0HSuHSy524U=', 1, 'juan', 2),
 ('1234567890', 'QFYmvgPHqXuoeoQ9+lY/rAdmSDzRKArP2gDROkdrouE=', 1, 'victor', 3),
-('23456456', 'dYsA6aDWQD9eCFVPlannZFFfIDH37sWUuRXjWl8otok=', 0, 'pedroS', 2),
+('23456456', 'dYsA6aDWQD9eCFVPlannZFFfIDH37sWUuRXjWl8otok=', 1, 'pedroS', 2),
 ('234589234', 'bkAdafeCY2P8/NiZxBmFNoyduJfl8S9zxwgmlk+oyLs=', 1, 'guillermo', 1);
 
 -- --------------------------------------------------------
@@ -2497,7 +2836,10 @@ INSERT INTO `tbl_ventas` (`id_ventas`, `tipo_de_pago`, `fecha_venta`, `descuento
 (25, '2', '2016-11-09 15:38:19', 0, 3300, 3300, 1, '1234567890', '4567893343', 1, NULL),
 (26, '2', '2016-11-10 12:19:07', 0, 42200, 42200, 1, '1234567890', '2343545', 1, NULL),
 (27, '1', '2016-11-10 12:49:22', 0, 5900, 5900, 1, '1234567890', '2343545', 2, '2016-12-10'),
-(28, '1', '2016-11-10 12:45:18', 3630, 138600, 134970, 1, '1234567890', '234568765', 0, '2016-11-26');
+(28, '1', '2016-11-10 12:45:18', 3630, 138600, 134970, 1, '1234567890', '234568765', 0, '2016-11-26'),
+(29, '1', '2016-11-20 01:18:51', 0, 3600, 3600, 1, '1234567890', '553253232222222', 1, '2016-12-19'),
+(30, '2', '2016-11-20 01:24:43', 0, 3600, 3600, 1, '1234567890', '00000000', 1, NULL),
+(31, '0', '2016-11-20 01:36:53', 0, 6800, 6800, 1, '1234567890', '2343545', 1, NULL);
 
 --
 -- Índices para tablas volcadas
@@ -2689,22 +3031,22 @@ ALTER TABLE `tbl_abono_ventas`
 -- AUTO_INCREMENT de la tabla `tbl_bajas`
 --
 ALTER TABLE `tbl_bajas`
-  MODIFY `id_bajas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_bajas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 --
 -- AUTO_INCREMENT de la tabla `tbl_categoria`
 --
 ALTER TABLE `tbl_categoria`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 --
 -- AUTO_INCREMENT de la tabla `tbl_compras`
 --
 ALTER TABLE `tbl_compras`
-  MODIFY `id_compras` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_compras` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 --
 -- AUTO_INCREMENT de la tabla `tbl_compras_has_tbl_productos`
 --
 ALTER TABLE `tbl_compras_has_tbl_productos`
-  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 --
 -- AUTO_INCREMENT de la tabla `tbl_configuracion`
 --
@@ -2719,17 +3061,17 @@ ALTER TABLE `tbl_configuracion_ventas`
 -- AUTO_INCREMENT de la tabla `tbl_menu`
 --
 ALTER TABLE `tbl_menu`
-  MODIFY `id_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 --
 -- AUTO_INCREMENT de la tabla `tbl_paginas`
 --
 ALTER TABLE `tbl_paginas`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagina_rol`
 --
 ALTER TABLE `tbl_pagina_rol`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=224;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=225;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagoempleados`
 --
@@ -2744,12 +3086,12 @@ ALTER TABLE `tbl_prestamos`
 -- AUTO_INCREMENT de la tabla `tbl_productos`
 --
 ALTER TABLE `tbl_productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 --
 -- AUTO_INCREMENT de la tabla `tbl_productos_has_tbl_ventas`
 --
 ALTER TABLE `tbl_productos_has_tbl_ventas`
-  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 --
 -- AUTO_INCREMENT de la tabla `tbl_rol`
 --
@@ -2759,12 +3101,12 @@ ALTER TABLE `tbl_rol`
 -- AUTO_INCREMENT de la tabla `tbl_rol_menu`
 --
 ALTER TABLE `tbl_rol_menu`
-  MODIFY `idrol_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+  MODIFY `idrol_menu` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 --
 -- AUTO_INCREMENT de la tabla `tbl_ventas`
 --
 ALTER TABLE `tbl_ventas`
-  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 --
 -- Restricciones para tablas volcadas
 --
