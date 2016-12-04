@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-11-2016 a las 03:36:15
+-- Tiempo de generación: 04-12-2016 a las 02:35:39
 -- Versión del servidor: 5.6.21
 -- Versión de PHP: 5.6.3
 
@@ -252,6 +252,9 @@ DATE_FORMAT(p.fecha_pago, '%Y-%m-%d') AS fecha_pago,
 p.valorVentas,
 p.valorComision,
 p.cantidad_Dias,
+p.valor_prima,
+p.valor_vacaciones,
+p.valor_cesantias,
 p.valor_dia,
 p.estado,
 conpa.total_pago
@@ -362,6 +365,11 @@ SELECT id_persona, CONCAT(nombres, ' ', apellidos) AS cliente
 FROM tbl_persona
 WHERE id_persona = _idCliente$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_get_Abonos` (IN `_id` INT)  NO SQL
+SELECT COUNT(*) AS total 
+FROM tbl_abono_ventas 
+WHERE Tbl_Ventas_idventas = _id AND estado_abono = 1$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_GuardarPersona` (IN `_id_persona` VARCHAR(50), IN `_telefono` VARCHAR(30), IN `_nombres` VARCHAR(30), IN `_email` VARCHAR(50), IN `_direccion` VARCHAR(50), IN `_apellidos` VARCHAR(30), IN `_genero` VARCHAR(20), IN `_tipo_documento` VARCHAR(20), IN `_id_tipo_persona` INT, IN `_celular` VARCHAR(15), IN `_fecha_contrato` DATE, IN `_fecha_terminacion` DATE)  NO SQL
 INSERT INTO tbl_persona(id_persona, telefono, nombres, email,	direccion, apellidos, genero, tipo_documento, Tbl_TipoPersona_idTbl_TipoPersona, celular, fecha_Contrato, fecha_Terminacion_Contrato) 
 VALUES (_id_persona, _telefono, _nombres, _email, _direccion, _apellidos, _genero, _tipo_documento, _id_tipo_persona, _celular, _fecha_contrato, DATE_ADD(_fecha_terminacion, INTERVAL 12 MONTH))$$
@@ -443,23 +451,35 @@ BETWEEN _fecha_inicial and _fecha_final AND c.estado = 1
 ORDER BY c.id_compras desc;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Pagos` ()  NO SQL
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Pagos` (IN `_id` INT)  NO SQL
 SELECT DISTINCT p.id_persona, 
 	   	        CONCAT(p.nombres, ' ', p.apellidos) AS empleado,
        			p.estado, 
        			t.Tbl_nombre_tipo_persona,
-                pe.fecha_pago,
+                pe.id_pago,
+                DATE_FORMAT(pe.fecha_pago, '%Y/%m/%d') AS fecha_pago,
                 pe.cantidad_dias,
                 pe.valor_dia,
+                pe.valor_prima,
                 pe.valorComision,
+                pe.cantidad_dias,
+                pe.valor_vacaciones,
+                pe.valor_cesantias,
+                pe.valorVentas,
+                pe.estado,
                 dp.total_pago,
-                cp.tipo_pago
+                cp.tipo_pago,
+                cp.tiempo_pago,
+                cp.Valor_dia,
+                cp.porcentaje_comision,
+                cp.valor_base,
+                cp.idTbl_Configuracion
 FROM tbl_persona p 
 JOIN tbl_tipopersona t ON p.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
 JOIN tbl_pagoempleados pe ON pe.Tbl_Persona_id_persona = p.id_persona
-JOIN tbl_pagoempleados_has_tbl_configuracion dp ON dp.Tbl_PagoEmpleados_idpago = pe.id_pago 
+JOIN tbl_pagoempleados_has_tbl_configuracion dp ON dp.Tbl_PagoEmpleados_idpago = pe.id_pago
 JOIN tbl_configuracion cp ON cp.idTbl_Configuracion = dp.Tbl_Configuracion_idTbl_Configuracion 
-WHERE pe.estado = 1 
+WHERE pe.id_pago = _id AND pe.estado = 1 
 ORDER BY pe.fecha_pago DESC$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Informe_Pagos2` (IN `_id_persona` VARCHAR(50))  NO SQL
@@ -467,12 +487,16 @@ SELECT DISTINCT p.id_persona,
 	   	        CONCAT(p.nombres, ' ', p.apellidos) AS empleado,
        			p.estado, 
        			t.Tbl_nombre_tipo_persona,
-                pe.fecha_pago,
+                DATE_FORMAT(pe.fecha_pago, '%Y-%m-%d') AS fecha_pago,
+                pe.valor_prima,
+                pe.valor_vacaciones,
+                pe.valor_cesantias,
                 pe.cantidad_dias,
                 pe.valor_dia,
                 pe.valorComision,
                 dp.total_pago,
-                cp.tipo_pago
+                cp.tipo_pago,
+                cp.Valor_dia
 FROM tbl_persona p 
 JOIN tbl_tipopersona t ON p.Tbl_TipoPersona_idTbl_TipoPersona = t.idTbl_tipo_persona
 JOIN tbl_pagoempleados pe ON pe.Tbl_Persona_id_persona = p.id_persona
@@ -649,7 +673,7 @@ SELECT p.idTbl_Abono_Prestamo,
        DATE_FORMAT(p.fecha_abono, '%Y-%m-%d') AS fecha_abono, 
        p.estado_abono, 
        p.Tbl_Prestamos_idprestamos, 
-       p.valor 
+       p.valor
 FROM tbl_abono_prestamo p 
 WHERE p.Tbl_Prestamos_idprestamos = id_prestamo 
 ORDER BY p.fecha_abono DESC$$
@@ -869,7 +893,7 @@ FROM Tbl_configuracion
 WHERE idTbl_Configuracion = 3$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Configuracion_Pagos` ()  NO SQL
-SELECT idTbl_Configuracion, tipo_pago 
+SELECT idTbl_Configuracion, tipo_pago, tiempo_pago, Valor_dia, porcentaje_comision, valor_base
 FROM Tbl_configuracion$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Listar_Configuracion_Venta` ()  NO SQL
@@ -1399,6 +1423,16 @@ SELECT *,
        WHERE DATE_SUB(fecha_limite,INTERVAL 5 DAY) <= CURDATE() 
        AND estado_prestamo IN(1,3)$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Notificacion_Prestamos_a_Vencer` ()  NO SQL
+SELECT pre.*, 
+       NOW() AS fecha_actual, 
+       p.*, tp.Tbl_nombre_tipo_persona
+FROM tbl_tipopersona tp 
+JOIN tbl_persona p ON tp.idTbl_tipo_persona = p.Tbl_TipoPersona_idTbl_TipoPersona 
+JOIN tbl_prestamos pre ON pre.Tbl_Persona_id_persona = p.id_persona
+WHERE DATE_SUB(fecha_limite,INTERVAL 5 DAY) <= CURDATE() 
+AND pre.estado_prestamo = 1$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Notificacion_Stock_Minimo` ()  NO SQL
 SELECT * 
 FROM tbl_productos 
@@ -1430,7 +1464,7 @@ JOIN tbl_persona pro ON pro.id_persona = c.Tbl_Persona_id_persona_proveedor
 WHERE Tbl_Compras_idcompras = _id_compra 
 GROUP BY pro.id_persona$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Abono` (IN `_id` VARCHAR(50))  NO SQL
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Abono` (IN `_id` INT)  NO SQL
 SELECT p.id_persona, 
        CONCAT(p.nombres, ' ', p.apellidos) AS cliente, 
        (SELECT valor_abono 
@@ -1441,19 +1475,17 @@ SELECT p.id_persona,
        DATE_FORMAT(a.fechaAbono, '%Y/%m/%d') AS fechaAbono,
        a.saldo_abono, 
        DATE_FORMAT(v.fecha_limite_credito, '%Y/%m/%d') AS                        fecha_limite_credito,
-       (v.total_venta - sum(a.valor_abono)) AS pendiente,
+       (v.total_venta - a.saldo_abono) AS pendiente,
        fn_total_abonos(v.id_ventas) AS total_abonado, 
        v.total_venta
 FROM tbl_persona p 
 JOIN tbl_ventas v ON v.Tbl_persona_idpersona_cliente = p.id_persona 
 JOIN tbl_abono_ventas a ON a.Tbl_Ventas_idventas = v.id_ventas 
-WHERE p.id_persona = _id 
-AND a.estado_abono = 1 
-AND v.estado_credito = 1 
-AND v.estado = 1 
-GROUP BY p.id_persona$$
+WHERE a.idabono = _id 
+AND a.estado_abono = 1  
+GROUP BY a.idabono$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Abono_Prestamo` (IN `_id` VARCHAR(50))  NO SQL
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Abono_Prestamo` (IN `_id` INT)  NO SQL
 SELECT
 	p.id_persona,
 	CONCAT(p.nombres, ' ', p.apellidos) AS empleado,
@@ -1483,11 +1515,9 @@ FROM
 JOIN tbl_prestamos pre ON pre.Tbl_Persona_id_persona = p.id_persona
 JOIN tbl_abono_prestamo ap ON ap.Tbl_Prestamos_idprestamos = pre.id_prestamos
 WHERE
-	p.id_persona = _id
-AND ap.estado_abono = 1
-AND pre.estado_prestamo = 1
+	ap.Tbl_Prestamos_idprestamos = _id
 GROUP BY
-	p.id_persona$$
+	ap.Tbl_Prestamos_idprestamos$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Pdf_Detalles_Venta` (IN `_id_venta` INT)  NO SQL
 SELECT
@@ -1625,6 +1655,16 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Traer_idproducto` (IN `_id_produ
 SELECT id_producto, nombre_producto, precio_detal, precio_por_mayor, precio_unitario, Tbl_Categoria_idcategoria,tamano, stock_minimo FROM tbl_productos 
 WHERE id_producto = _id_producto$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Traer_Producto_Modificado` (IN `_id` INT)  NO SQL
+SELECT DISTINCT p.id_producto, p.nombre_producto, p.precio_detal, p.precio_por_mayor, p.precio_unitario 
+FROM tbl_productos p
+WHERE p.id_producto = _id$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Traer_Ultimo_Producto` ()  NO SQL
+SELECT id_producto, nombre_producto, precio_detal, precio_por_mayor, precio_unitario
+FROM tbl_productos
+WHERE id_producto = (SELECT max(id_producto) FROM tbl_productos)$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_UltimaBaja` ()  NO SQL
 SELECT MAX(id_bajas) ultimo_id 
 FROM tbl_bajas$$
@@ -1640,6 +1680,13 @@ FROM tbl_ventas$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Ultima_Persona` ()  NO SQL
 SELECT MAX(id_persona) AS ultimo 
 FROM tbl_persona$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Ultimo_id` ()  NO SQL
+SELECT max(id_ventas) as ultimo_id 
+FROM tbl_ventas$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Ultimo_Pago` ()  NO SQL
+SELECT MAX(id_pago) as id_pago FROM tbl_pagoempleados$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `SP_Ultimo_usuario` ()  NO SQL
 SELECT MAX(id_usuarios) as ultimo 
@@ -1858,7 +1905,23 @@ CREATE TABLE `tbl_abono_prestamo` (
 INSERT INTO `tbl_abono_prestamo` (`idTbl_Abono_Prestamo`, `fecha_abono`, `valor`, `estado_abono`, `Tbl_Prestamos_idprestamos`) VALUES
 (1, '2016-11-02 12:14:16', 2000, 1, 1),
 (2, '2016-11-09 02:12:03', 1000, 1, 1),
-(3, '2016-11-21 01:20:28', 1000, 1, 2);
+(3, '2016-11-21 01:20:28', 1000, 1, 2),
+(4, '2016-12-03 16:20:06', 1000, 1, 4),
+(5, '2016-12-03 16:22:14', 1000, 1, 4),
+(6, '2016-12-03 16:28:24', 1000, 1, 4),
+(7, '2016-12-03 16:32:21', 2000, 1, 1),
+(8, '2016-12-03 16:32:21', 2000, 1, 1),
+(9, '2016-12-03 18:29:10', 2000, 1, 2),
+(10, '2016-12-03 18:31:36', 5000, 1, 2),
+(11, '2016-12-03 19:05:30', 1000, 1, 2),
+(12, '2016-12-03 19:07:12', 3000, 1, 1),
+(13, '2016-12-03 19:09:25', 5000, 1, 1),
+(14, '2016-12-03 19:39:45', 3000, 1, 1),
+(15, '2016-12-03 20:03:11', 1000, 1, 4),
+(16, '2016-12-03 20:09:23', 1000, 1, 4),
+(17, '2016-12-03 20:09:45', 2000, 1, 3),
+(18, '2016-12-03 20:10:09', 3000, 1, 3),
+(19, '2016-12-03 20:11:00', 1000, 1, 3);
 
 -- --------------------------------------------------------
 
@@ -1899,7 +1962,14 @@ INSERT INTO `tbl_abono_ventas` (`idabono`, `fechaAbono`, `valor_abono`, `Tbl_Ven
 (17, '2016-11-21 01:27:34', 1000, 1, 1000, 0, '1234567890'),
 (18, '2016-11-21 01:28:13', 5600, 1, 6600, 1, '1234567890'),
 (19, '2016-11-22 15:46:57', 2500, 8, 3500, 1, '1234567890'),
-(20, '2016-11-22 15:59:56', 15000, 33, 15000, 1, '1234567890');
+(20, '2016-11-22 15:59:56', 15000, 33, 15000, 1, '1234567890'),
+(21, '2016-12-03 14:58:37', 500, 5, 1500, 1, '1234567890'),
+(22, '2016-12-03 15:01:13', 500, 5, 2000, 1, '1234567890'),
+(23, '2016-12-03 15:03:24', 300, 5, 2300, 1, '1234567890'),
+(24, '2016-12-03 15:12:56', 200, 5, 2500, 1, '1234567890'),
+(25, '2016-12-03 15:43:18', 800, 5, 3300, 1, '1234567890'),
+(26, '2016-12-03 18:36:51', 3000, 27, 3000, 1, '1234567890'),
+(27, '2016-12-03 18:37:47', 2000, 27, 5000, 1, '1234567890');
 
 -- --------------------------------------------------------
 
@@ -1970,7 +2040,11 @@ INSERT INTO `tbl_compras` (`id_compras`, `fecha_compra`, `valor_total`, `estado`
 (6, '2016-11-17 00:32:19', 15000, 1, '3435465656', '1234567890'),
 (7, '2016-11-20 04:18:01', 10000, 1, '3435465656', '1234567890'),
 (8, '2016-11-20 20:27:50', 12000, 1, '2434ert454', '1234567890'),
-(9, '2016-11-26 23:25:39', 9000, 1, '2434ert454', '1234567890');
+(9, '2016-11-26 23:25:39', 9000, 1, '2434ert454', '1234567890'),
+(10, '2016-11-28 11:23:21', 135000, 1, '2434ert454', '1234567890'),
+(11, '2016-11-28 11:25:16', 195000, 1, '3435465656', '1234567890'),
+(12, '2016-12-01 20:16:22', 17000, 1, '43567567', '1234567890'),
+(13, '2016-12-02 17:51:57', 6500, 1, '43567567', '1234567890');
 
 -- --------------------------------------------------------
 
@@ -2005,7 +2079,17 @@ INSERT INTO `tbl_compras_has_tbl_productos` (`Tbl_Compras_idcompras`, `id_detall
 (8, 12, 1, 5, 5000),
 (8, 13, 1, 4, 2000),
 (8, 14, 1, 2, 5000),
-(9, 15, 3, 19, 3000);
+(9, 15, 3, 19, 3000),
+(10, 16, 5, 22, 3000),
+(10, 17, 30, 19, 3000),
+(10, 18, 10, 6, 3000),
+(11, 19, 5, 18, 3000),
+(11, 20, 6, 5, 5000),
+(11, 21, 50, 19, 3000),
+(12, 22, 2, 41, 3000),
+(12, 23, 2, 43, 5500),
+(13, 24, 2, 48, 2000),
+(13, 25, 1, 46, 2500);
 
 -- --------------------------------------------------------
 
@@ -2049,7 +2133,7 @@ CREATE TABLE `tbl_configuracion_ventas` (
 --
 
 INSERT INTO `tbl_configuracion_ventas` (`idConfiguracionVentas`, `Porcentaje_Maximo_Dcto`, `Valor_Subtotal_Minimo`, `Porcentaje_Minimo_Dcto`, `Valor_Subtotal_Maximo`) VALUES
-(1, 5, 15000, 3, 51000);
+(1, 5, 15000, 3, 50000);
 
 -- --------------------------------------------------------
 
@@ -2230,7 +2314,14 @@ INSERT INTO `tbl_paginas` (`codigo_paginas`, `nombre`, `url`, `estado`) VALUES
 (110, 'producto/obtenerProductos2', 'producto/obtenerProductos2', 1),
 (111, 'ventas/pdfdetalles', 'Ventas/generarpdfDetallesVentas2', 1),
 (112, 'producto/validacionNombre', 'producto/validacionNombre2', 1),
-(113, 'empleados/reportePrestamos', 'Empleados/pdfPrestamos', 1);
+(113, 'empleados/reportePrestamos', 'Empleados/pdfPrestamos', 1),
+(114, 'empleados/comprobante', 'Empleados/generarComprobantePagos', 1),
+(115, 'empleados/prestamos', 'Empleados/listarPrestamosVencer', 1),
+(116, 'producto/validacionNombre', 'producto/validacionNombreProducto', 1),
+(117, 'compras/modificarPreciosAjax', 'Compras/modificarPrecios', 1),
+(118, 'ventas/reciboAbonos', 'Ventas/generarReciboAbonos', 1),
+(119, 'Empleados/reciboAbonos', 'Empleados/generarReciboAbonos', 1),
+(120, 'Empleados/pdfAbonos', 'Empleados/generarpdfDetalleAbonos', 1);
 
 -- --------------------------------------------------------
 
@@ -2464,7 +2555,14 @@ INSERT INTO `tbl_pagina_rol` (`codigo_paginas`, `Tbl_rol_id_rol`, `Tbl_Paginas_c
 (222, 3, 110, 1),
 (223, 3, 111, 1),
 (224, 3, 112, 1),
-(225, 3, 113, 1);
+(225, 3, 113, 1),
+(226, 3, 114, 1),
+(227, 3, 115, 1),
+(228, 3, 116, 1),
+(229, 3, 117, 1),
+(230, 3, 118, 1),
+(232, 3, 119, 1),
+(233, 3, 120, 1);
 
 -- --------------------------------------------------------
 
@@ -2492,9 +2590,19 @@ CREATE TABLE `tbl_pagoempleados` (
 
 INSERT INTO `tbl_pagoempleados` (`id_pago`, `fecha_pago`, `Tbl_Persona_id_persona`, `valorVentas`, `valorComision`, `cantidad_dias`, `valor_dia`, `valor_prima`, `valor_vacaciones`, `valor_cesantias`, `estado`) VALUES
 (1, '2016-11-07 20:44:46', '234589234', 0, 0, NULL, NULL, 0, 0, 0, 1),
-(2, '2016-11-08 11:17:49', '1128453257', NULL, NULL, 0, 0, NULL, NULL, NULL, 1),
 (3, '2016-11-10 13:23:06', '23456456', 0, 0, NULL, NULL, 0, 0, 0, 1),
-(4, '2016-11-10 13:28:48', '1234567890', 285295, 2852, NULL, NULL, 0, 0, 0, 1);
+(4, '2016-11-10 13:28:48', '1234567890', 285295, 2852, NULL, NULL, 0, 0, 0, 1),
+(5, '2016-11-29 00:15:46', '234589234', 0, 0, NULL, NULL, 0, 291333, 145666, 1),
+(6, '2016-11-29 00:17:56', '23456456', 0, 0, NULL, NULL, 0, 699583, 349791, 1),
+(7, '2016-11-29 00:20:19', '234589234', 0, 0, NULL, NULL, 0, 291333, 145666, 1),
+(8, '2016-11-29 00:21:47', '23456456', 0, 0, NULL, NULL, 0, 699583, 349791, 1),
+(9, '2016-11-29 00:22:06', '23456456', 0, 0, NULL, NULL, 0, 699583, 349791, 1),
+(10, '2016-11-29 02:21:08', '23456456', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(11, '2016-11-29 03:05:59', '1234567890', 249716, 2497, NULL, NULL, 0, 0, 0, 1),
+(12, '2016-11-29 03:13:00', '234589234', 0, 0, NULL, NULL, 0, 291333, 145666, 1),
+(13, '2016-11-29 11:34:52', '23456456', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(14, '2016-11-29 11:35:44', '1234567890', 0, 0, NULL, NULL, 0, 0, 0, 1),
+(15, '2016-11-29 11:42:46', '234589234', 0, 0, NULL, NULL, 0, 291333, 145666, 1);
 
 -- --------------------------------------------------------
 
@@ -2514,9 +2622,19 @@ CREATE TABLE `tbl_pagoempleados_has_tbl_configuracion` (
 
 INSERT INTO `tbl_pagoempleados_has_tbl_configuracion` (`Tbl_PagoEmpleados_idpago`, `Tbl_Configuracion_idTbl_Configuracion`, `total_pago`) VALUES
 (1, 1, 480000),
-(2, 1, 0),
 (3, 1, 416000),
-(4, 1, 482852);
+(4, 1, 482852),
+(5, 2, 436999),
+(6, 2, 1049374),
+(7, 2, 436999),
+(8, 2, 1049374),
+(9, 2, 1049374),
+(10, 1, 480),
+(11, 1, 2977),
+(12, 2, 436999),
+(13, 1, 480),
+(14, 1, 480),
+(15, 2, 436999);
 
 -- --------------------------------------------------------
 
@@ -2529,7 +2647,7 @@ CREATE TABLE `tbl_persona` (
   `telefono` varchar(30) NOT NULL,
   `nombres` varchar(30) NOT NULL,
   `email` varchar(45) NOT NULL,
-  `direccion` varchar(45) DEFAULT NULL,
+  `direccion` varchar(50) DEFAULT NULL,
   `apellidos` varchar(30) NOT NULL,
   `estado` tinyint(1) NOT NULL DEFAULT '1',
   `genero` varchar(20) NOT NULL,
@@ -2546,19 +2664,24 @@ CREATE TABLE `tbl_persona` (
 
 INSERT INTO `tbl_persona` (`id_persona`, `telefono`, `nombres`, `email`, `direccion`, `apellidos`, `estado`, `genero`, `tipo_documento`, `Tbl_TipoPersona_idTbl_TipoPersona`, `celular`, `fecha_Contrato`, `fecha_Terminacion_Contrato`) VALUES
 ('00000000', '123123123', 'Paola', 'pao@gmail.com', 'Carrera 15 nro 20-10', 'Calle', 1, 'Femenino', 'Cedula', 6, '30098787787', NULL, NULL),
+('1026151027', '', 'Jhoan', '', '', 'Lopez', 1, 'Masculino', 'Cedula', 5, '3445465656', NULL, NULL),
 ('1128453257', '3029748', 'Juan', 'jdvargas752@misena.edu.co', 'Prado', 'Vargas', 1, 'Masculino', 'Cedula', 2, '3002349012', NULL, NULL),
 ('1234567678', '2345675', 'Hector', 'h@gmail.com', 'Medellin', 'Maya', 0, 'Masculino', 'Cedula', 5, '1234567890', NULL, NULL),
-('1234567890', '3458912', 'Victor', 'davidvargas.jdvp@gmail.com', 'Medellín', 'Gómez', 1, 'Masculino', 'Cedula', 1, '3004525612', '2016-10-12', '2017-10-12'),
+('1234567890', '3458912', 'Victor', 'davidvargas.jdvp@gmail.com', 'Medellín', 'Gómez', 1, 'Masculino', 'Cedula', 1, '3004525612', '2016-11-28', '2017-11-28'),
 ('2343545', '2324567', 'Juan', 'juanP@gmail.com', 'Lejos', 'Penagos', 1, 'Masculino', 'Cedula', 5, '5243435454', NULL, NULL),
-('23456456', '2323232', 'Pedro', 'pedro@gmail.com', 'Copacabana', 'Salas', 1, 'Masculino', 'Cedula', 1, '3012342323', '2016-10-15', '2017-10-15'),
+('23456456', '2323232', 'Ped', 'pedro@gmail.com', 'Copacabana', 'Salas', 1, 'Masculino', 'Cedula', 1, '3012342323', '2016-12-01', '2017-12-01'),
 ('234568765', '', 'Johnatan', '', '', 'Ramirez', 1, 'Masculino', 'Cedula', 5, '234344545', NULL, NULL),
 ('234589234', '2348912', 'Guillermo', 'guillermo@hotmail.com', 'Medellín', 'Gómez', 1, 'Masculino', 'Cedula', 1, '3003459012', '2016-10-02', '2017-03-03'),
 ('2434ert454', '2347890', 'Jhoan', 'joancito@gmail.com', 'Estrella', 'Lopez', 1, '', 'Cédula_Extranjera', 3, '1234567890', NULL, NULL),
 ('343454556', '3459012', 'Cristian', 'cristian@gmail.com', 'Medellín', 'Rojas', 1, 'Masculino', 'Cedula', 5, '3002349012', NULL, NULL),
 ('3435465656', '2348912', 'Jonhatan', 'jonhatan@yahoo.es', 'San javier', 'ramirez', 1, '', 'Cedula', 4, '3002348923', NULL, NULL),
+('34567235', '', 'Marcos', '', '', 'Rodriguez', 1, 'Masculino', 'Cedula', 5, '3458901234', NULL, NULL),
 ('43567567', '2343434', 'Viviana', '', 'Bello', 'Perez', 1, 'Femenino', 'Cedula', 4, '3019099887', NULL, NULL),
+('456657676', '', 'Jhoan', '', '', 'Lopez', 1, 'Masculino', 'Cedula', 5, '3002349012', NULL, NULL),
 ('4567893343', '3459012', 'Eduard', 'eduard@gmail.com', 'Prado', 'Vargas', 1, 'Masculino', 'Cedula', 5, '3002345678', NULL, NULL),
 ('553253232222222', '2333333', 'Hector', 'hector@gmail.com', '', 'Maya', 1, 'Masculino', 'Cedula', 6, '3145678907', NULL, NULL),
+('565656566', '', 'Josefin', '', '', 'Mantilla', 1, 'Masculino', 'Cedula', 5, '343545657', NULL, NULL),
+('890234567', '', 'Marcos', '', '', 'Rodriguez', 1, 'Masculino', 'Cedula', 6, '3002348912', NULL, NULL),
 ('er454rtt65', '2390123', 'Diego', 'diego@hotmail.com', 'Aranjuez', 'Gómez', 1, 'Masculino', 'Cédula_Extranjera', 6, '3007892378', NULL, NULL);
 
 -- --------------------------------------------------------
@@ -2583,7 +2706,9 @@ CREATE TABLE `tbl_prestamos` (
 
 INSERT INTO `tbl_prestamos` (`id_prestamos`, `estado_prestamo`, `valor_prestamo`, `fecha_prestamo`, `fecha_limite`, `descripcion`, `Tbl_Persona_id_persona`) VALUES
 (1, 1, 20000, '2016-11-02', '2016-12-04', '', '234589234'),
-(2, 1, 10000, '2016-11-10', '2016-12-10', 'personal', '234589234');
+(2, 1, 10000, '2016-11-10', '2016-12-10', 'personal', '234589234'),
+(3, 1, 10000, '2016-12-01', '2016-12-31', '', '1234567890'),
+(4, 0, 5000, '2016-12-01', '2016-12-31', '', '23456456');
 
 -- --------------------------------------------------------
 
@@ -2612,11 +2737,28 @@ INSERT INTO `tbl_productos` (`id_producto`, `nombre_producto`, `estado`, `precio
 (1, 'Camisa', 1, 3600, 3400, 2200, 1, '', 5, 3),
 (2, 'Gorro', 1, 6000, 5400, 5000, 2, 'mediano', 5, 0),
 (3, 'Mochila', 0, 3550, 3250, 3050, 2, 'pequeña', 5, 0),
-(4, 'Pipa', 1, 3000, 2600, 2000, 3, 'mediano', 10, 33),
-(5, 'Bufanda', 1, 6000, 5500, 5000, 3, 'largo', 5, 1),
-(6, 'Marihuana', 1, 4000, 3500, 3000, 3, 'hierba muy buena', 5, 0),
-(18, 'Pañoleta', 1, 3500, 3300, 3000, 2, NULL, 5, 0),
-(19, 'Mochila', 1, 3500, 3300, 3000, 2, NULL, 5, 3);
+(4, 'Pipa', 1, 3000, 2600, 2000, 3, 'mediano', 10, 30),
+(5, 'Bufanda', 1, 6000, 5500, 5000, 3, 'largo', 5, 4),
+(6, 'Marihuana', 1, 4000, 3500, 3000, 3, 'hierba muy buena', 5, 3),
+(18, 'Pañoleta', 1, 3500, 3300, 3000, 2, NULL, 5, 5),
+(19, 'Mochila', 1, 3500, 3300, 3000, 2, NULL, 5, 79),
+(22, 'Atrapa Sueño', 1, 3600, 3300, 3000, 2, '', 3, 5),
+(33, 'Aretes', 1, 4500, 4000, 3500, 2, NULL, 5, 0),
+(34, 'Camisa', 1, 2000, 1000, 3000, 2, NULL, 2, 0),
+(35, 'Dieguito', 1, 6500, 6200, 6000, 3, NULL, 2, 0),
+(36, 'Mono', 1, 5000, 4800, 4500, 3, NULL, 2, 0),
+(37, 'Boso', 1, 9000, 8500, 8000, 17, NULL, 3, 0),
+(38, 'Giovany', 1, 4000, 3000, 6000, 17, NULL, 1, 0),
+(39, 'Cosas', 1, 6000, 5800, 5000, 3, NULL, 2, 0),
+(40, 'Cosas', 1, 6000, 5800, 5000, 3, NULL, 2, 0),
+(41, 'Toto', 1, 4000, 3500, 3000, 17, NULL, 2, 2),
+(42, 'Yoyo', 1, 4000, 3500, 3000, 3, NULL, 2, 0),
+(43, 'Tortuga', 1, 6000, 5800, 5500, 3, NULL, 2, 2),
+(44, 'borojo', 1, 11000, 10500, 9000, 17, '', 3, 0),
+(45, 'Manzana', 1, 4000, 3500, 2000, 3, NULL, 2, 0),
+(46, 'Tomate', 1, 5000, 4000, 2500, 1, NULL, 3, 1),
+(47, 'Mama', 1, 5000, 4000, 2000, 17, NULL, 4, 0),
+(48, 'Tablero', 1, 5000, 4000, 2500, 2, NULL, 1, 2);
 
 -- --------------------------------------------------------
 
@@ -2695,7 +2837,12 @@ INSERT INTO `tbl_productos_has_tbl_ventas` (`Tbl_Ventas_id_ventas`, `cantidad`, 
 (32, 2, 2, 36, 5400, 5000),
 (33, 1, 5, 37, 6000, 5000),
 (33, 3, 4, 38, 3000, 2000),
-(34, 2, 4, 39, 3000, 2000);
+(34, 2, 4, 39, 3000, 2000),
+(35, 2, 6, 40, 3500, 3000),
+(36, 4, 19, 41, 3500, 3000),
+(36, 5, 6, 42, 4000, 3000),
+(37, 3, 4, 43, 2600, 2000),
+(37, 3, 5, 44, 5500, 5000);
 
 -- --------------------------------------------------------
 
@@ -2861,7 +3008,7 @@ INSERT INTO `tbl_usuarios` (`id_usuarios`, `clave`, `estado`, `nombre_usuario`, 
 ('1128453257', 'M/NeK22d8n3Vupc4khM34fZFx5UflGIW0HSuHSy524U=', 1, 'juan', 2),
 ('1234567890', 'QFYmvgPHqXuoeoQ9+lY/rAdmSDzRKArP2gDROkdrouE=', 1, 'victor', 3),
 ('23456456', 'dYsA6aDWQD9eCFVPlannZFFfIDH37sWUuRXjWl8otok=', 1, 'pedroS', 2),
-('234589234', 'bkAdafeCY2P8/NiZxBmFNoyduJfl8S9zxwgmlk+oyLs=', 1, 'guillermo', 1);
+('234589234', 'bkAdafeCY2P8/NiZxBmFNoyduJfl8S9zxwgmlk+oyLs=', 0, 'guillermo', 1);
 
 -- --------------------------------------------------------
 
@@ -2892,10 +3039,10 @@ INSERT INTO `tbl_ventas` (`id_ventas`, `tipo_de_pago`, `fecha_venta`, `descuento
 (2, '2', '2016-11-01 22:54:27', 675, 22500, 21825, 1, '1234567890', 'er454rtt65', 1, NULL),
 (3, '1', '2016-11-02 12:44:38', 0, 3500, 3500, 1, '1234567890', 'er454rtt65', 0, '2016-12-02'),
 (4, '2', '2016-11-08 20:51:54', 0, 3300, 3300, 1, '1234567890', '1234567678', 1, NULL),
-(5, '1', '2016-11-09 03:07:33', 0, 3300, 3300, 1, '1234567890', '1234567678', 1, '2016-12-08'),
+(5, '1', '2016-12-03 15:43:18', 0, 3300, 3300, 1, '1234567890', '1234567678', 0, '2016-12-03'),
 (6, '2', '2016-11-09 11:17:22', 0, 3300, 3300, 1, '1234567890', '1234567678', 1, NULL),
 (7, '2', '2016-11-09 14:06:52', 0, 7000, 7000, 1, '1234567890', '00000000', 1, NULL),
-(8, '1', '2016-11-22 15:46:57', 0, 3500, 3500, 1, '1234567890', '00000000', 0, '2016-12-09'),
+(8, '1', '2016-11-29 21:43:24', 0, 3500, 3500, 1, '1234567890', '00000000', 0, '2016-11-03'),
 (9, '2', '2016-11-09 14:20:12', 0, 3500, 3500, 1, '1234567890', '00000000', 1, NULL),
 (10, '2', '2016-11-09 14:24:10', 0, 3300, 3300, 1, '1234567890', '2343545', 1, NULL),
 (11, '2', '2016-11-09 14:25:58', 0, 3500, 3500, 1, '1234567890', '00000000', 1, NULL),
@@ -2921,7 +3068,10 @@ INSERT INTO `tbl_ventas` (`id_ventas`, `tipo_de_pago`, `fecha_venta`, `descuento
 (31, '0', '2016-11-20 01:36:53', 0, 6800, 6800, 1, '1234567890', '2343545', 1, NULL),
 (32, '2', '2016-11-20 21:42:28', 654, 21800, 21146, 1, '1234567890', '343454556', 1, NULL),
 (33, '1', '2016-11-22 15:59:55', 0, 15000, 15000, 1, '1234567890', '00000000', 0, '2016-12-22'),
-(34, '1', '2016-11-22 16:00:44', 0, 6000, 6000, 1, '1234567890', '00000000', 1, '2016-12-22');
+(34, '1', '2016-11-22 16:00:44', 0, 6000, 6000, 1, '1234567890', '00000000', 1, '2016-12-22'),
+(35, '2', '2016-11-28 23:14:11', 0, 7000, 7000, 1, '1234567890', '890234567', 1, NULL),
+(36, '2', '2016-11-29 13:10:33', 0, 34000, 34000, 1, '1234567890', '1026151027', 1, NULL),
+(37, '2', '2016-11-30 12:39:29', 0, 24300, 24300, 1, '1234567890', '456657676', 1, NULL);
 
 --
 -- Índices para tablas volcadas
@@ -3103,12 +3253,12 @@ ALTER TABLE `tbl_ventas`
 -- AUTO_INCREMENT de la tabla `tbl_abono_prestamo`
 --
 ALTER TABLE `tbl_abono_prestamo`
-  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idTbl_Abono_Prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 --
 -- AUTO_INCREMENT de la tabla `tbl_abono_ventas`
 --
 ALTER TABLE `tbl_abono_ventas`
-  MODIFY `idabono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `idabono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 --
 -- AUTO_INCREMENT de la tabla `tbl_bajas`
 --
@@ -3123,12 +3273,12 @@ ALTER TABLE `tbl_categoria`
 -- AUTO_INCREMENT de la tabla `tbl_compras`
 --
 ALTER TABLE `tbl_compras`
-  MODIFY `id_compras` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_compras` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 --
 -- AUTO_INCREMENT de la tabla `tbl_compras_has_tbl_productos`
 --
 ALTER TABLE `tbl_compras_has_tbl_productos`
-  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 --
 -- AUTO_INCREMENT de la tabla `tbl_configuracion`
 --
@@ -3148,32 +3298,32 @@ ALTER TABLE `tbl_menu`
 -- AUTO_INCREMENT de la tabla `tbl_paginas`
 --
 ALTER TABLE `tbl_paginas`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=114;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagina_rol`
 --
 ALTER TABLE `tbl_pagina_rol`
-  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=226;
+  MODIFY `codigo_paginas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=234;
 --
 -- AUTO_INCREMENT de la tabla `tbl_pagoempleados`
 --
 ALTER TABLE `tbl_pagoempleados`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 --
 -- AUTO_INCREMENT de la tabla `tbl_prestamos`
 --
 ALTER TABLE `tbl_prestamos`
-  MODIFY `id_prestamos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_prestamos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 --
 -- AUTO_INCREMENT de la tabla `tbl_productos`
 --
 ALTER TABLE `tbl_productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 --
 -- AUTO_INCREMENT de la tabla `tbl_productos_has_tbl_ventas`
 --
 ALTER TABLE `tbl_productos_has_tbl_ventas`
-  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 --
 -- AUTO_INCREMENT de la tabla `tbl_rol`
 --
@@ -3188,7 +3338,7 @@ ALTER TABLE `tbl_rol_menu`
 -- AUTO_INCREMENT de la tabla `tbl_ventas`
 --
 ALTER TABLE `tbl_ventas`
-  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id_ventas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 --
 -- Restricciones para tablas volcadas
 --
